@@ -1,0 +1,3812 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --surface: #faf7f2;
+    --surface2: #f0ebe0;
+    --border: #ddd6c8;
+    --accent: #8a6a3a;
+    --accent2: #a07840;
+    --text: #1e1a14;
+    --text2: #5a5040;
+    --text3: #9a8e7a;
+    --danger: #b85050;
+    --success: #4a8a60;
+    --info: #4060b0;
+    --radius: 10px;
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --shadow: 0 1px 4px rgba(80,60,20,0.07), 0 4px 16px rgba(80,60,20,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ───── LOGIN ───── */
+  #login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 30% 40%, #ede5d0 0%, #f5f0e8 60%);
+  }
+
+  .login-card {
+    width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 40px;
+    box-shadow: 0 8px 32px rgba(80,60,20,0.10), 0 1px 4px rgba(80,60,20,0.06);
+  }
+
+  .login-logo {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .login-sub {
+    color: var(--text3);
+    font-size: 13px;
+    margin-bottom: 36px;
+    font-weight: 300;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 8px;
+  }
+
+  .field-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 20px;
+  }
+
+  .field-input:focus { border-color: var(--accent); }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    border-radius: 8px;
+    padding: 13px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 4px;
+  }
+
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:active { transform: scale(0.99); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .login-error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 14px;
+    text-align: center;
+    min-height: 20px;
+  }
+
+  /* ───── APP SHELL ───── */
+  #app-screen { display: none; min-height: 100vh; }
+
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(245,240,232,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 100;
+    gap: 16px;
+    box-shadow: 0 1px 0 var(--border);
+  }
+
+  .topbar-logo {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--accent);
+    flex: 1;
+  }
+
+  .topbar-user {
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .topbar-logout {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text2);
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.2s;
+  }
+
+  .topbar-logout:hover { border-color: var(--accent); color: var(--accent); }
+
+  .layout {
+    display: flex;
+    padding-top: 56px;
+    min-height: 100vh;
+  }
+
+  /* ───── SIDEBAR ───── */
+  .sidebar {
+    width: 220px;
+    position: fixed;
+    top: 56px; bottom: 0; left: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 12px;
+    overflow-y: auto;
+  }
+
+  .nav-section {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 12px;
+    margin-bottom: 8px;
+    margin-top: 20px;
+  }
+
+  .nav-section:first-child { margin-top: 0; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 400;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(201,169,110,0.12); color: var(--accent); font-weight: 500; }
+
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+  /* ───── MAIN CONTENT ───── */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    padding: 32px;
+    max-width: calc(100vw - 220px);
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .page-sub {
+    color: var(--text3);
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+
+  /* ───── CARDS / GRID ───── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-detail {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  /* ───── TABLES ───── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  td {
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(42,42,42,0.5);
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ───── BADGES ───── */
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-pesos { background: rgba(74,138,96,0.12); color: var(--success); }
+  .badge-dolares { background: rgba(138,106,58,0.12); color: var(--accent); }
+  .badge-facturado { background: rgba(64,96,176,0.12); color: var(--info); }
+  .badge-sin-factura { background: rgba(154,142,122,0.15); color: var(--text3); }
+  .badge-pagado { background: rgba(74,138,96,0.12); color: var(--success); }
+  .badge-parcial { background: rgba(138,106,58,0.12); color: var(--accent); }
+  .badge-pendiente { background: rgba(184,80,80,0.12); color: var(--danger); }
+  .badge-mano { background: rgba(138,106,58,0.12); color: #8a5a28; }
+  .badge-banco { background: rgba(64,96,176,0.12); color: var(--info); }
+  .badge-gestion { background: rgba(120,80,160,0.12); color: #7040a0; }
+  .badge-arquitectura { background: rgba(40,120,140,0.12); color: #3080a0; }
+  .badge-anulada { background: rgba(184,80,80,0.12); color: var(--danger); }
+  .badge-aprobado { background: rgba(74,138,96,0.15); color: var(--success); }
+  .badge-pres-pendiente { background: rgba(138,106,58,0.15); color: var(--accent); }
+
+  /* ───── FORMS ───── */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .form-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text);
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  select option { background: var(--surface2); }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .btn-sm {
+    padding: 9px 18px;
+    border-radius: 7px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+
+  .btn-accent { background: var(--accent); color: #0f0f0f; }
+  .btn-accent:hover { background: var(--accent2); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: transparent; border: 1px solid rgba(224,112,112,0.3); color: var(--danger); }
+  .btn-danger:hover { background: rgba(224,112,112,0.1); }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  /* ───── MONTH SELECTOR ───── */
+  .month-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+  }
+
+  .month-label { font-size: 13px; color: var(--text2); }
+
+  .month-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+  }
+
+  /* ───── UPLOAD ZONE ───── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface2);
+  }
+
+  .upload-zone:hover { border-color: var(--accent); background: rgba(201,169,110,0.04); }
+  .upload-zone.drag { border-color: var(--accent); background: rgba(201,169,110,0.08); }
+
+  .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .upload-text { color: var(--text2); font-size: 13px; }
+  .upload-hint { color: var(--text3); font-size: 12px; margin-top: 6px; }
+
+  /* ───── LOADING / TOAST ───── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 1000;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(80,60,20,0.12);
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-left: 3px solid var(--success); }
+  #toast.error { border-left: 3px solid var(--danger); }
+  #toast.info { border-left: 3px solid var(--info); }
+
+  /* ───── MODAL ───── */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    display: none;
+  }
+
+  .modal-backdrop.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    max-width: 540px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 16px 48px rgba(80,60,20,0.14);
+  }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  /* ───── EMPTY STATE ───── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text3);
+  }
+
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+
+  /* ───── DIVIDER ───── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  /* ───── AI ANALYSIS ───── */
+  .ai-bubble {
+    background: linear-gradient(135deg, rgba(138,106,58,0.06), rgba(138,106,58,0.02));
+    border: 1px solid rgba(138,106,58,0.2);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text2);
+  }
+
+  .ai-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  /* ───── SCROLLBAR ───── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Panel de Gestión</div>
+    <div class="login-sub">Estudio de Arquitectura & Gestión Municipal</div>
+    <label class="field-label">Usuario</label>
+    <input class="field-input" type="text" id="login-user" placeholder="tu usuario" autocomplete="username">
+    <label class="field-label">Contraseña</label>
+    <input class="field-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn-primary" id="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-logo">Panel de Gestión</div>
+    <span class="topbar-user" id="topbar-name"></span>
+    <button class="topbar-logout" onclick="doLogout()">Salir</button>
+  </div>
+  <div class="layout">
+    <nav class="sidebar">
+      <div class="nav-section">Principal</div>
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <span class="nav-icon">📊</span> Tablero
+      </button>
+
+      <div class="nav-section">Cargar</div>
+      <button class="nav-item" onclick="showPage('presupuestos')">
+        <span class="nav-icon">📝</span> Presupuestos
+      </button>
+      <button class="nav-item" onclick="showPage('contratos')">
+        <span class="nav-icon">📄</span> Contratos
+      </button>
+      <button class="nav-item" onclick="showPage('facturas')">
+        <span class="nav-icon">🧾</span> Facturas
+      </button>
+      <button class="nav-item" onclick="showPage('pagos-mano')">
+        <span class="nav-icon">💵</span> Pagos en Mano
+      </button>
+      <button class="nav-item" onclick="showPage('extractos')">
+        <span class="nav-icon">🏦</span> Extractos Bancarios
+      </button>
+
+      <div class="nav-section">Consultas</div>
+      <button class="nav-item" onclick="showPage('documentos')">
+        <span class="nav-icon">📁</span> Documentos
+      </button>
+      <button class="nav-item" onclick="showPage('clientes')">
+        <span class="nav-icon">👥</span> Clientes
+      </button>
+      <button class="nav-item" onclick="showPage('colaboradores')">
+        <span class="nav-icon">🤝</span> Colaboradores
+      </button>
+      <button class="nav-item" onclick="showPage('analisis')">
+        <span class="nav-icon">🤖</span> Análisis IA
+      </button>
+
+      <div class="nav-section" style="margin-top:32px">Admin</div>
+      <button class="nav-item" style="color:var(--danger);opacity:0.7" onclick="resetDatos()">
+        <span class="nav-icon">🗑️</span> Limpiar datos
+      </button>
+    </nav>
+
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-title">Tablero</div>
+        <div class="page-sub">Resumen del mes seleccionado</div>
+
+        <div class="month-bar">
+          <span class="month-label">Período:</span>
+          <select class="month-select" id="dash-mes" onchange="renderDashboard()">
+          </select>
+          <select class="month-select" id="dash-anio" onchange="renderDashboard()">
+          </select>
+        </div>
+
+        <div class="cards-grid" id="dash-cards"></div>
+
+        <!-- GRÁFICO 18 MESES -->
+        <div class="table-wrap" style="margin-bottom:24px;padding:20px 24px">
+          <div class="table-header" style="padding:0 0 16px 0;border:none">
+            <span class="table-title">Ingresos mensuales — últimos 18 meses</span>
+            <div style="display:flex;gap:12px;align-items:center">
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block"></span>En mano (ARS)</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--info);display:inline-block"></span>Bancario (ARS)</span>
+            </div>
+          </div>
+          <div style="position:relative;height:220px;width:100%" id="chart-container">
+            <canvas id="ingresos-chart"></canvas>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+          <div class="table-wrap">
+            <div class="table-header"><span class="table-title">Cobrado por Cliente</span></div>
+            <table><thead><tr><th>Cliente</th><th>ARS</th><th>USD</th></tr></thead>
+            <tbody id="dash-por-cliente"></tbody></table>
+          </div>
+          <div class="table-wrap">
+            <div class="table-header"><span class="table-title">Canal de Cobro</span></div>
+            <table><thead><tr><th>Canal</th><th>ARS</th><th>USD</th></tr></thead>
+            <tbody id="dash-canal"></tbody></table>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <span class="table-title">Deuda por Cliente</span>
+            <button class="btn-sm btn-ghost" onclick="exportarDeudasPDF()" style="font-size:12px">⬇️ Exportar PDF</button>
+          </div>
+          <table id="tabla-deudas">
+            <thead><tr><th>Cliente</th><th>Origen</th><th>Fecha</th><th>Total Acordado</th><th>Cobrado</th><th>Retención</th><th>Saldo Pendiente</th></tr></thead>
+            <tbody id="dash-deuda"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CONTRATOS -->
+      <div class="page" id="page-contratos">
+        <div class="page-title">Contratos</div>
+        <div class="page-sub">Presupuestos aprobados. Para agregar un contrato, aprobá el presupuesto correspondiente.</div>
+
+        <!-- TABLA -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <span class="table-title">Contratos Registrados</span>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)">
+              Ordenar por:
+              <button class="btn-sm btn-ghost" style="padding:4px 10px;font-size:11px" onclick="ordenarContratos('cliente')">Cliente</button>
+              <button class="btn-sm btn-ghost" style="padding:4px 10px;font-size:11px" onclick="ordenarContratos('obra')">Dirección</button>
+              <button class="btn-sm btn-ghost" style="padding:4px 10px;font-size:11px" onclick="ordenarContratos('concepto')">Trabajo</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table style="min-width:960px">
+              <thead><tr>
+                <th>Cliente</th>
+                <th>Dirección</th>
+                <th>Trabajo</th>
+                <th>Total USD</th>
+                <th>Total ARS</th>
+                <th>Facturado USD</th>
+                <th>$ Facturados ARS</th>
+                <th>IVA Facturado</th>
+                <th>Cobrado en Mano</th>
+                <th>Saldo Pendiente</th>
+                <th>Fecha</th>
+              </tr></thead>
+              <tbody id="tabla-contratos"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- FACTURAS -->
+      <div class="page" id="page-facturas">
+        <div class="page-title">Facturas</div>
+        <div class="page-sub">Subí uno o varios PDFs y la IA completa los datos automáticamente</div>
+
+        <!-- PASO 1: SUBIR PDFs -->
+        <div class="form-card" id="f-upload-card">
+          <div class="form-title">📎 Subir PDFs de Facturas / Notas de Crédito</div>
+          <div class="upload-zone" id="f-drop-zone"
+            onclick="document.getElementById('f-pdfs').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handleFacturaDrop(event)">
+            <div class="upload-icon">🧾</div>
+            <div class="upload-text">Hacé clic o arrastrá los PDFs acá</div>
+            <div class="upload-hint">Podés subir varias facturas y notas de crédito a la vez</div>
+          </div>
+          <input type="file" id="f-pdfs" accept=".pdf" multiple style="display:none" onchange="procesarFacturasPDF(this.files)">
+
+          <div id="f-archivos-seleccionados" style="margin-top:14px;display:none">
+            <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em">Archivos seleccionados</div>
+            <div id="f-lista-archivos"></div>
+            <div class="btn-row" style="margin-top:14px">
+              <button class="btn-sm btn-accent" id="f-btn-procesar" onclick="procesarConIA()">
+                ✨ Procesar con IA
+              </button>
+              <button class="btn-sm btn-ghost" onclick="limpiarSeleccion()">Limpiar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 2: REVISIÓN Y CONFIRMACIÓN -->
+        <div id="f-revision-card" style="display:none">
+          <div class="form-card">
+            <div class="form-title">✅ Revisá los datos extraídos — corregí si es necesario</div>
+            <div id="f-revision-contenido"></div>
+            <div class="btn-row" style="margin-top:20px">
+              <button class="btn-sm btn-accent" onclick="confirmarFacturas()">Confirmar y Guardar Todo</button>
+              <button class="btn-sm btn-ghost" onclick="cancelarRevision()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <span class="table-title">Facturas Registradas</span>
+            <span id="f-contador" style="font-size:12px;color:var(--text3)"></span>
+          </div>
+          <table>
+            <thead><tr><th>Número</th><th>Tipo</th><th>Cliente</th><th>Neto Gravado</th><th>Total c/IVA</th><th>Fecha</th><th>Estado</th></tr></thead>
+            <tbody id="tabla-facturas"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGOS EN MANO -->
+      <div class="page" id="page-pagos-mano">
+        <div class="page-title">Pagos en Mano</div>
+        <div class="page-sub">Registrá cada cobro recibido en efectivo</div>
+
+        <div class="form-card">
+          <div class="form-title">Nuevo Pago en Mano</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Cliente</label>
+              <select id="pm-cliente" onchange="onPmClienteChange()">
+                <option value="">— Seleccioná un cliente —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Dirección / Obra</label>
+              <select id="pm-obra" onchange="onPmObraChange()" disabled>
+                <option value="">— Primero elegí un cliente —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Trabajo</label>
+              <select id="pm-contrato" disabled>
+                <option value="">— Primero elegí una dirección —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Factura Asociada (opcional)</label>
+              <select id="pm-factura">
+                <option value="">Sin factura específica</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Monto</label>
+              <input type="number" id="pm-monto" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>Moneda</label>
+              <select id="pm-moneda" onchange="onPagoMonedaChange()">
+                <option value="ARS">Pesos (ARS)</option>
+                <option value="USD">Dólares (USD)</option>
+              </select>
+            </div>
+            <div class="form-group" id="pm-tc-group">
+              <label>Tipo de cambio aplicado</label>
+              <input type="number" id="pm-tc" placeholder="Ej: 1400" min="0" step="any">
+            </div>
+            <div class="form-group">
+              <label>Fecha</label>
+              <input type="date" id="pm-fecha">
+            </div>
+            <div class="form-group full">
+              <label>Observaciones</label>
+              <input type="text" id="pm-obs" placeholder="Ej: Cuota 1 de 3, pago parcial, etc.">
+            </div>
+            <!-- REPARTO CON COLABORADORES -->
+            <div class="form-group full" style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+              <label>¿El monto cobrado se comparte con alguien?</label>
+              <select id="pm-compartido" onchange="onCompartidoChange()" style="margin-top:6px">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+              </select>
+            </div>
+            <div id="pm-reparto-panel" class="form-group full" style="display:none">
+              <div id="pm-reparto-lista"></div>
+              <button type="button" class="btn-sm btn-ghost" style="margin-top:10px" onclick="agregarFilaReparto()">+ Agregar colaborador</button>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-sm btn-accent" onclick="guardarPagoMano()">Registrar Pago</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header"><span class="table-title">Pagos en Mano Registrados</span></div>
+          <table>
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Moneda</th><th>Referencia</th><th>Obs.</th></tr></thead>
+            <tbody id="tabla-pagos-mano"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EXTRACTOS BANCARIOS -->
+      <div class="page" id="page-extractos">
+        <div class="page-title">Extractos Bancarios</div>
+        <div class="page-sub">Subí el PDF del extracto; la IA lee los movimientos y los carga automáticamente</div>
+
+        <div class="form-card">
+          <div class="form-title">Subir Extracto Bancario</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Banco</label>
+              <input type="text" id="ex-banco" placeholder="Ej: Galicia, Santander...">
+            </div>
+            <div class="form-group">
+              <label>Mes / Año del Extracto</label>
+              <input type="month" id="ex-periodo">
+            </div>
+          </div>
+          <div class="upload-zone" onclick="document.getElementById('ex-pdf').click()" id="ex-drop">
+            <div class="upload-icon">🏦</div>
+            <div class="upload-text" id="ex-pdf-label">Hacé clic para subir el PDF del extracto</div>
+            <div class="upload-hint">La IA va a identificar los movimientos y te pedirá que confirmes a qué cliente corresponde cada uno</div>
+          </div>
+          <input type="file" id="ex-pdf" accept=".pdf" style="display:none" onchange="previewFile('ex-pdf','ex-pdf-label')">
+          <div class="btn-row" style="margin-top:16px">
+            <button class="btn-sm btn-accent" onclick="procesarExtracto()">Procesar Extracto con IA</button>
+          </div>
+        </div>
+
+        <div id="ex-resultado" style="display:none">
+          <div class="form-card">
+            <div class="form-title">Movimientos Detectados — Asigná cada uno antes de confirmar</div>
+            <div style="background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.2);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text2)">
+              ⚠️ Cada movimiento debe ser asignado a una o más facturas, o marcado como <strong>transferencia propia</strong>. No se puede confirmar hasta que todos estén asignados.
+            </div>
+            <div id="ex-movimientos"></div>
+            <div class="btn-row" style="margin-top:16px">
+              <button class="btn-sm btn-accent" id="btn-confirmar-extracto" onclick="confirmarExtracto()" disabled>Confirmar y Guardar Todos</button>
+              <button class="btn-sm btn-ghost" onclick="cancelarExtracto()">Cancelar</button>
+              <span id="ex-progreso" style="font-size:12px;color:var(--text3);margin-left:8px"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header"><span class="table-title">Cobros Bancarios Registrados</span></div>
+          <table>
+            <thead><tr><th>Fecha</th><th>Descripción</th><th>Asignación</th><th>Monto</th><th>Tipo</th><th>Banco</th><th></th></tr></thead>
+            <tbody id="tabla-bancarios"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DOCUMENTOS -->
+      <div class="page" id="page-documentos">
+        <div class="page-title">Documentos</div>
+        <div class="page-sub">Facturas y notas de crédito almacenadas en Google Drive</div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <span class="table-title">Archivos en Drive</span>
+            <a href="https://drive.google.com/drive/folders/1P10-d9zsqong59gQUrsEmnXfreOweykw" target="_blank" class="btn-sm btn-ghost" style="text-decoration:none;font-size:12px">📁 Abrir carpeta en Drive</a>
+          </div>
+          <table>
+            <thead><tr><th>Comprobante</th><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Monto Total</th><th>Archivo</th></tr></thead>
+            <tbody id="tabla-documentos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CLIENTES -->
+      <div class="page" id="page-clientes">
+        <div class="page-title">Clientes</div>
+        <div class="page-sub">Vista consolidada y gestión de nombres alternativos por cliente</div>
+
+        <!-- ABM ALIASES -->
+        <div class="form-card" id="alias-form-card">
+          <div class="form-title">🔗 Nombres alternativos de clientes</div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.6">
+            Vinculá nombres distintos que usa un mismo cliente. Por ejemplo: <em style="color:var(--accent)">Camila Vinacur</em> factura bajo <em style="color:var(--accent)">Develop SA</em>.<br>
+            Al buscar por cualquiera de los dos nombres, la app los reconocerá como el mismo cliente.
+          </p>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr auto;align-items:end">
+            <div class="form-group">
+              <label>Nombre principal (como aparece en contratos/presupuestos)</label>
+              <input type="text" id="alias-principal" placeholder="Ej: Camila Vinacur" list="alias-principales-list">
+              <datalist id="alias-principales-list"></datalist>
+            </div>
+            <div class="form-group">
+              <label>Nombre alternativo (como aparece en facturas u otros)</label>
+              <input type="text" id="alias-alternativo" placeholder="Ej: Develop SA">
+            </div>
+            <button class="btn-sm btn-accent" style="height:38px;margin-bottom:1px" onclick="guardarAlias()">+ Agregar</button>
+          </div>
+        </div>
+
+        <!-- TABLA DE ALIASES -->
+        <div class="table-wrap" style="margin-bottom:24px">
+          <div class="table-header">
+            <span class="table-title">Aliases registrados</span>
+            <span id="alias-contador" style="font-size:12px;color:var(--text3)"></span>
+          </div>
+          <table>
+            <thead><tr><th>Nombre Principal</th><th>Nombre Alternativo</th><th>Encontrado en</th><th></th></tr></thead>
+            <tbody id="tabla-aliases"></tbody>
+          </table>
+        </div>
+
+        <!-- BÚSQUEDA -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <input type="text" id="clientes-search" placeholder="🔍 Buscar por nombre (o alias)..."
+            oninput="renderClientes()"
+            style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;width:280px;transition:border-color 0.2s"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor=''">
+          <span style="font-size:12px;color:var(--text3)" id="clientes-total"></span>
+        </div>
+
+        <div id="lista-clientes"></div>
+      </div>
+
+      <!-- COLABORADORES -->
+      <div class="page" id="page-colaboradores">
+        <div class="page-title">Colaboradores</div>
+        <div class="page-sub">Registrá las personas con quienes compartís cobros</div>
+
+        <div class="form-card">
+          <div class="form-title">Nuevo Colaborador</div>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
+            <div class="form-group">
+              <label>Nombre</label>
+              <input type="text" id="col-nombre" placeholder="Ej: María">
+            </div>
+            <div class="form-group">
+              <label>Apellido</label>
+              <input type="text" id="col-apellido" placeholder="Ej: González">
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-sm btn-accent" onclick="guardarColaborador()">Agregar Colaborador</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header"><span class="table-title">Colaboradores Registrados</span></div>
+          <table>
+            <thead><tr><th>Nombre</th><th>Apellido</th><th>Fecha de alta</th><th></th></tr></thead>
+            <tbody id="tabla-colaboradores"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PRESUPUESTOS -->
+      <div class="page" id="page-presupuestos">
+        <div class="page-title">Presupuestos</div>
+        <div class="page-sub">Subí el PDF del presupuesto y la IA extrae los datos. Marcá cuáles fueron aprobados.</div>
+
+        <!-- SUBIR PDFs -->
+        <div class="form-card" id="pres-upload-card">
+          <div class="form-title">📝 Subir PDFs de Presupuestos</div>
+          <div class="upload-zone" id="pres-drop-zone"
+            onclick="document.getElementById('pres-pdfs').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handlePresupuestoDrop(event)">
+            <div class="upload-icon">📝</div>
+            <div class="upload-text">Hacé clic o arrastrá los PDFs acá</div>
+            <div class="upload-hint">Podés subir varios presupuestos a la vez</div>
+          </div>
+          <input type="file" id="pres-pdfs" accept=".pdf" multiple style="display:none" onchange="procesarPresupuestosPDF(this.files)">
+
+          <div id="pres-archivos-seleccionados" style="margin-top:14px;display:none">
+            <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em">Archivos seleccionados</div>
+            <div id="pres-lista-archivos"></div>
+            <div class="btn-row" style="margin-top:14px">
+              <button class="btn-sm btn-accent" id="pres-btn-procesar" onclick="procesarPresupuestosConIA()">✨ Procesar con IA</button>
+              <button class="btn-sm btn-ghost" onclick="limpiarSeleccionPresupuestos()">Limpiar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- REVISIÓN -->
+        <div id="pres-revision-card" style="display:none">
+          <div class="form-card">
+            <div class="form-title">✅ Revisá los datos extraídos — corregí si es necesario</div>
+            <div id="pres-revision-contenido"></div>
+            <div class="btn-row" style="margin-top:20px">
+              <button class="btn-sm btn-accent" onclick="confirmarPresupuestos()">Confirmar y Guardar Todo</button>
+              <button class="btn-sm btn-ghost" onclick="cancelarRevisionPresupuestos()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="cards-grid" id="pres-stats" style="margin-bottom:24px;display:none">
+          <div class="stat-card">
+            <div class="stat-label">Total Presupuestos</div>
+            <div class="stat-value" id="pres-stat-total">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Aprobados</div>
+            <div class="stat-value" style="color:var(--success)" id="pres-stat-aprobados">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pendientes</div>
+            <div class="stat-value" style="color:var(--accent)" id="pres-stat-pendientes">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tasa de aprobación</div>
+            <div class="stat-value" style="color:var(--info)" id="pres-stat-tasa">—</div>
+          </div>
+        </div>
+
+        <!-- TABLA -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <span class="table-title">Presupuestos Registrados</span>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)">
+              Filtrar:
+              <button class="btn-sm btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtrarPresupuestos('todos')" id="pf-todos">Todos</button>
+              <button class="btn-sm btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtrarPresupuestos('pendiente')" id="pf-pendiente">Pendientes</button>
+              <button class="btn-sm btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtrarPresupuestos('aprobado')" id="pf-aprobado">Aprobados</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table style="min-width:980px">
+              <thead><tr>
+                <th>Cliente</th>
+                <th>Nombre Alternativo Cliente</th>
+                <th>Obra / Dirección</th>
+                <th>Concepto</th>
+                <th>Monto</th>
+                <th>Moneda</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="tabla-presupuestos"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANÁLISIS IA -->
+      <div class="page" id="page-analisis">
+        <div class="page-title">Análisis con IA</div>
+        <div class="page-sub">Hacé cualquier consulta sobre tus datos</div>
+
+        <div class="form-card">
+          <div class="form-grid" style="grid-template-columns:1fr auto">
+            <div class="form-group">
+              <label>Tu Consulta</label>
+              <textarea id="ai-query" placeholder="Ej: ¿Cuánto me deben en total en dólares? ¿Qué cliente tiene mayor deuda? ¿Cuánto cobré en marzo?" rows="3"></textarea>
+            </div>
+          </div>
+          <button class="btn-sm btn-accent" onclick="consultarIA()">Consultar</button>
+        </div>
+
+        <div id="ai-respuesta"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Modal para asignar movimiento bancario -->
+<div class="modal-backdrop" id="modal-editar-cobro">
+  <div class="modal">
+    <div class="modal-title">Editar Asignación</div>
+    <div id="modal-cobro-detalle" style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--text2)"></div>
+
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Tipo de Movimiento</label>
+      <select id="edit-tipo" onchange="onEditTipoChange()">
+        <option value="ingreso_simple">Pago de una factura</option>
+        <option value="ingreso_multiple">Pago que cubre dos facturas</option>
+        <option value="propio">Transferencia propia / fondeo</option>
+      </select>
+    </div>
+
+    <div id="edit-panel-simple">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Factura</label>
+        <select id="edit-fac1"></select>
+      </div>
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:10px 14px;background:rgba(138,106,58,0.07);border:1px solid rgba(138,106,58,0.2);border-radius:8px;user-select:none;margin-bottom:16px">
+        <input type="checkbox" id="edit-retencion"
+          style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--text)">La diferencia corresponde a una retención de Ganancias</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Si está marcado, la diferencia no se contabiliza como deuda pendiente</div>
+        </div>
+      </label>
+    </div>
+
+    <div id="edit-panel-multiple" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="form-group">
+          <label>Factura 1</label>
+          <select id="edit-facA"></select>
+        </div>
+        <div class="form-group">
+          <label>Monto Factura 1</label>
+          <input type="number" id="edit-montoA" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Factura 2</label>
+          <select id="edit-facB"></select>
+        </div>
+        <div class="form-group">
+          <label>Monto Factura 2</label>
+          <input type="number" id="edit-montoB" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <div id="edit-panel-propio" style="display:none">
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Descripción (opcional)</label>
+        <input type="text" id="edit-nota-propio" placeholder="Ej: Fondeo desde cuenta personal">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-sm btn-accent" onclick="guardarEdicionCobro()">Guardar Cambios</button>
+      <button class="btn-sm btn-ghost" onclick="cerrarModalEditar()">Cancelar</button>
+      <button class="btn-sm btn-danger" onclick="eliminarCobro()" style="margin-left:auto">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// CONFIGURACIÓN
+// ════════════════════════════════════════════
+const SHEET_ID = '1-V6S1-zkVb9zQwcoww6C7nHrh2sUoJBevRbypqVSUac';
+const SHEET_NAME = 'usuarios_app';
+const DRIVE_FOLDER_ID = '1P10-d9zsqong59gQUrsEmnXfreOweykw';
+const WORKER_URL = 'https://noisy-wind-315bpanel-proxy.nicoolaspisano.workers.dev';
+
+// ════════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════════
+let DB = {
+  contratos: [],
+  facturas: [],
+  pagosMano: [],
+  cobrosBancarios: [],
+  colaboradores: [],
+  presupuestos: [],
+  clientesAlias: []
+};
+let currentUser = null;
+let pendingMovimientos = [];
+let currentMovIdx = 0;
+
+// ════════════════════════════════════════════
+// RESET DE DATOS
+// ════════════════════════════════════════════
+function resetDatos() {
+  const opciones = [
+    { key: 'facturas_extractos', label: 'Solo Facturas y Extractos Bancarios' },
+    { key: 'todo', label: 'TODOS los datos (contratos, facturas, pagos, extractos, colaboradores)' }
+  ];
+
+  // Modal inline con confirm
+  const eleccion = confirm(
+    '¿Qué datos querés limpiar?\n\n' +
+    'Presioná OK para limpiar SOLO Facturas y Extractos Bancarios.\n' +
+    'Presioná Cancelar para no hacer nada.'
+  );
+
+  if (!eleccion) {
+    // Segunda opción: borrar todo
+    const todo = confirm('¿Querés borrar TODOS los datos en su lugar? (contratos, facturas, pagos, extractos, colaboradores)\n\nEsta acción no se puede deshacer.');
+    if (!todo) return;
+    DB = { contratos: [], facturas: [], pagosMano: [], cobrosBancarios: [], colaboradores: [] };
+    saveDB();
+    renderDashboard();
+    toast('Todos los datos fueron eliminados.', 'info');
+    return;
+  }
+
+  DB.facturas = [];
+  DB.cobrosBancarios = [];
+  saveDB();
+  renderDashboard();
+  if (document.getElementById('tabla-facturas')) renderTablaFacturas();
+  if (document.getElementById('tabla-bancarios')) renderTablaBancarios();
+  toast('Facturas y Extractos Bancarios eliminados.', 'info');
+}
+
+
+function saveDB() {
+  localStorage.setItem('panelDB', JSON.stringify(DB));
+}
+
+function loadDB() {
+  const raw = localStorage.getItem('panelDB');
+  if (raw) {
+    try {
+      DB = JSON.parse(raw);
+      if (!DB.colaboradores) DB.colaboradores = [];
+      if (!DB.presupuestos) DB.presupuestos = [];
+      if (!DB.clientesAlias) DB.clientesAlias = [];
+    }
+    catch(e) { DB = { contratos:[], facturas:[], pagosMano:[], cobrosBancarios:[], colaboradores:[], presupuestos:[] }; }
+  }
+}
+
+// ════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════
+function toast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  setTimeout(() => { t.className = ''; }, 3500);
+}
+
+// ════════════════════════════════════════════
+// LOGIN
+// ════════════════════════════════════════════
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+
+  if (!user || !pass) { err.textContent = 'Completá usuario y contraseña.'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Verificando...';
+  err.textContent = '';
+
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    const res = await fetch(url);
+    const text = await res.text();
+    const rows = text.trim().split('\n').slice(1);
+    let found = null;
+    for (const row of rows) {
+      const cols = row.split(',').map(c => c.replace(/^"|"$/g,'').trim());
+      if (cols[0] === user && cols[1] === pass) { found = cols[2] || user; break; }
+    }
+    if (found) {
+      currentUser = { user, nombre: found };
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+      document.getElementById('topbar-name').textContent = found;
+      loadDB();
+      initSelects();
+      renderDashboard();
+    } else {
+      err.textContent = 'Usuario o contraseña incorrectos.';
+    }
+  } catch(e) {
+    err.textContent = 'Error de conexión. Verificá que el Sheet sea público.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Ingresar';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// ════════════════════════════════════════════
+// NAVEGACIÓN
+// ════════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  if (name === 'contratos') renderTablaContratos();
+  if (name === 'facturas') { renderTablaFacturas(); updateFacturaSelects(); }
+  if (name === 'pagos-mano') { renderTablaPagosMano(); updatePagoManoSelects(); }
+  if (name === 'extractos') renderTablaBancarios();
+  if (name === 'documentos') renderDocumentos();
+  if (name === 'clientes') renderClientes();
+  if (name === 'colaboradores') renderColaboradores();
+  if (name === 'presupuestos') renderTablaPresupuestos();
+  if (name === 'dashboard') renderDashboard();
+}
+
+// ════════════════════════════════════════════
+// SELECTS DINÁMICOS
+// ════════════════════════════════════════════
+function initSelects() {
+  const mesEl = document.getElementById('dash-mes');
+  const anioEl = document.getElementById('dash-anio');
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  mesEl.innerHTML = meses.map((m,i) => `<option value="${i+1}">${m}</option>`).join('');
+  const now = new Date();
+  mesEl.value = now.getMonth()+1;
+  for (let y = now.getFullYear(); y >= now.getFullYear()-3; y--) {
+    anioEl.innerHTML += `<option value="${y}">${y}</option>`;
+  }
+}
+
+function updateFacturaSelects() {
+  // ya no se usa para carga manual, se mantiene para selects de pagos
+}
+
+// ════════════════════════════════════════════
+// FACTURAS — CARGA AUTOMÁTICA POR PDF CON IA
+// ════════════════════════════════════════════
+let facturasArchivos = []; // {file, nombre}
+let facturasPendientes = []; // datos extraídos por IA
+
+function handleFacturaDrop(event) {
+  event.preventDefault();
+  document.getElementById('f-drop-zone').classList.remove('drag');
+  const files = event.dataTransfer.files;
+  cargarArchivosFactura(files);
+}
+
+function procesarFacturasPDF(files) {
+  cargarArchivosFactura(files);
+}
+
+function cargarArchivosFactura(files) {
+  const pdfs = Array.from(files).filter(f => f.type === 'application/pdf');
+  if (!pdfs.length) { toast('Solo se aceptan archivos PDF.', 'error'); return; }
+  facturasArchivos = pdfs.map(f => ({ file: f, nombre: f.name }));
+
+  const lista = document.getElementById('f-lista-archivos');
+  lista.innerHTML = facturasArchivos.map((a, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:7px;margin-bottom:6px">
+      <span style="font-size:16px">📄</span>
+      <span style="font-size:13px;color:var(--text);flex:1">${a.nombre}</span>
+      <span class="badge badge-pendiente" id="f-estado-${i}">Pendiente</span>
+    </div>`).join('');
+
+  document.getElementById('f-archivos-seleccionados').style.display = '';
+}
+
+function limpiarSeleccion() {
+  facturasArchivos = [];
+  facturasPendientes = [];
+  document.getElementById('f-archivos-seleccionados').style.display = 'none';
+  document.getElementById('f-revision-card').style.display = 'none';
+  document.getElementById('f-pdfs').value = '';
+}
+
+async function procesarConIA() {
+  if (!facturasArchivos.length) return;
+
+  const btn = document.getElementById('f-btn-procesar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Procesando...';
+  facturasPendientes = [];
+
+  for (let i = 0; i < facturasArchivos.length; i++) {
+    const archivo = facturasArchivos[i];
+    const estadoEl = document.getElementById(`f-estado-${i}`);
+    estadoEl.textContent = 'Procesando...';
+    estadoEl.className = 'badge badge-parcial';
+
+    try {
+      const base64 = await fileToBase64(archivo.file);
+
+      const prompt = `Analizá SOLO la primera página de esta factura argentina y extraé los datos. 
+Devolvé ÚNICAMENTE un objeto JSON con este formato exacto, sin texto adicional:
+{
+  "tipo": "factura" si es Factura A, "facturab" si es Factura B, "nc" si es Nota de Crédito,
+  "numero": "XXXXX-XXXXXXXXX" (punto de venta guión número comprobante, ej: 00001-00000042),
+  "cliente": "razón social del cliente",
+  "cuit_cliente": "XXXXXXXXXXX",
+  "fecha_emision": "YYYY-MM-DD",
+  "neto_gravado": 0.00,
+  "iva": 0.00,
+  "total": 0.00,
+  "descripcion": "descripción del servicio/producto",
+  "cae": "número CAE",
+  "fecha_vto_cae": "YYYY-MM-DD",
+  "nc_referencia": "número de factura que anula, ej: 00001-00000039, o null si no aplica"
+}`;
+
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-5',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+      if (!data.content) throw new Error("Respuesta inesperada del servidor: " + JSON.stringify(data).substring(0,200));
+      const text = data.content.map(b => b.text || "").join("");
+      const clean = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+      parsed._archivo = archivo;
+      parsed._idx = i;
+      facturasPendientes.push(parsed);
+      estadoEl.textContent = '✓ Leído';
+      estadoEl.className = 'badge badge-pagado';
+
+    } catch(e) {
+      estadoEl.textContent = 'Error';
+      estadoEl.className = 'badge badge-anulada';
+      toast(`Error procesando ${archivo.nombre}: ${e.message}`, 'error');
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✨ Procesar con IA';
+
+  if (facturasPendientes.length) {
+    renderRevisionFacturas();
+    document.getElementById('f-revision-card').style.display = '';
+    document.getElementById('f-revision-card').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function renderRevisionFacturas() {
+  const contratosOpts = DB.contratos.map(c =>
+    `<option value="${c.id}">${c.cliente} — ${c.descripcion}</option>`).join('');
+  const facturasOpts = DB.facturas.filter(f => f.tipo === 'factura' && !f.anulada)
+    .map(f => `<option value="${f.id}">${f.numero} — ${f.cliente}</option>`).join('');
+
+  document.getElementById('f-revision-contenido').innerHTML = facturasPendientes.map((f, i) => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <span style="font-size:18px">${f.tipo === 'nc' ? '↩️' : '🧾'}</span>
+        <span style="font-weight:600;color:var(--text)">${f._archivo.nombre}</span>
+        <span class="badge ${f.tipo === 'nc' ? 'badge-anulada' : f.tipo === 'facturab' ? 'badge-gestion' : 'badge-facturado'}">${f.tipo === 'nc' ? 'Nota de Crédito' : f.tipo === 'facturab' ? 'Factura B' : 'Factura A'}</span>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Número</label>
+          <input type="text" id="rev-numero-${i}" value="${f.numero || ''}">
+        </div>
+        <div class="form-group">
+          <label>Cliente</label>
+          <input type="text" id="rev-cliente-${i}" value="${f.cliente || ''}">
+        </div>
+        <div class="form-group">
+          <label>CUIT Cliente</label>
+          <input type="text" id="rev-cuit-${i}" value="${f.cuit_cliente || ''}">
+        </div>
+        <div class="form-group">
+          <label>Fecha de Emisión</label>
+          <input type="date" id="rev-fecha-${i}" value="${f.fecha_emision || ''}">
+        </div>
+        <div class="form-group">
+          <label>Neto Gravado (ARS)</label>
+          <input type="number" id="rev-neto-${i}" value="${f.neto_gravado || 0}">
+        </div>
+        <div class="form-group">
+          <label>IVA (ARS)</label>
+          <input type="number" id="rev-iva-${i}" value="${f.iva || 0}">
+        </div>
+        <div class="form-group">
+          <label>Total c/IVA (ARS)</label>
+          <input type="number" id="rev-total-${i}" value="${f.total || 0}">
+        </div>
+        <div class="form-group">
+          <label>CAE</label>
+          <input type="text" id="rev-cae-${i}" value="${f.cae || ''}">
+        </div>
+        <div class="form-group">
+          <label>Contrato Asociado (opcional)</label>
+          <select id="rev-contrato-${i}">
+            <option value="">Sin contrato</option>
+            ${contratosOpts}
+          </select>
+        </div>
+        ${f.tipo === 'nc' ? `
+        <div class="form-group">
+          <label>Factura que Anula</label>
+          <input type="text" id="rev-nc-ref-${i}" value="${f.nc_referencia || ''}" placeholder="Ej: 00001-00000039">
+        </div>` : ''}
+        <div class="form-group full">
+          <label>Descripción</label>
+          <input type="text" id="rev-desc-${i}" value="${f.descripcion || ''}">
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function confirmarFacturas() {
+  const btnConfirmar = document.querySelector('[onclick="confirmarFacturas()"]');
+  if (btnConfirmar) { btnConfirmar.disabled = true; btnConfirmar.innerHTML = '<span class="spinner"></span>Guardando...'; }
+
+  let guardadas = 0;
+  let subidasDrive = 0;
+
+  for (let i = 0; i < facturasPendientes.length; i++) {
+    const f = facturasPendientes[i];
+    const numero = document.getElementById(`rev-numero-${i}`).value.trim();
+    const cliente = document.getElementById(`rev-cliente-${i}`).value.trim();
+    const cuit = document.getElementById(`rev-cuit-${i}`).value.trim();
+    const fecha = document.getElementById(`rev-fecha-${i}`).value;
+    const neto = parseFloat(document.getElementById(`rev-neto-${i}`).value) || 0;
+    const iva = parseFloat(document.getElementById(`rev-iva-${i}`).value) || 0;
+    const total = parseFloat(document.getElementById(`rev-total-${i}`).value) || 0;
+    const cae = document.getElementById(`rev-cae-${i}`).value.trim();
+    const contratoId = document.getElementById(`rev-contrato-${i}`).value;
+    const desc = document.getElementById(`rev-desc-${i}`).value.trim();
+    const ncRef = f.tipo === 'nc' ? document.getElementById(`rev-nc-ref-${i}`)?.value.trim() : null;
+
+    // Si es NC, buscar y marcar como anulada la factura referenciada
+    let ncRefId = null;
+    if (f.tipo === 'nc' && ncRef) {
+      const ncRefClean = ncRef.trim();
+      const facOrig = DB.facturas.find(fac =>
+        (fac.numero||'').trim() === ncRefClean ||
+        (fac.numero||'').replace(/\s/g,'') === ncRefClean.replace(/\s/g,'')
+      );
+      if (facOrig) { facOrig.anulada = true; ncRefId = facOrig.id; }
+    }
+
+    // Subir PDF a Drive — nombre: TIPO_NUMERO_CLIENTE.pdf
+    const tipoLabel = f.tipo === 'nc' ? 'NC' : f.tipo === 'facturab' ? 'FAC-B' : 'FAC-A';
+    const driveFilename = `${tipoLabel}_${numero.replace(/[^a-zA-Z0-9-]/g,'_')}_${cliente.replace(/[^a-zA-Z0-9]/g,'_').substring(0,30)}.pdf`;
+
+    // Feedback visual en la tarjeta de revisión
+    const cardEl = document.querySelector(`#f-revision-contenido > div:nth-child(${i+1})`);
+    let driveStatusEl = null;
+    if (cardEl) {
+      driveStatusEl = document.createElement('div');
+      driveStatusEl.style.cssText = 'margin-top:10px;font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px';
+      driveStatusEl.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:1.5px"></span>Subiendo a Drive...';
+      cardEl.appendChild(driveStatusEl);
+    }
+
+    const driveFileId = await uploadToDrive(f._archivo.file, driveFilename);
+
+    if (driveStatusEl) {
+      if (driveFileId) {
+        driveStatusEl.innerHTML = `<span style="color:var(--success)">✓ Subido a Drive</span> — <a href="https://drive.google.com/file/d/${driveFileId}/view" target="_blank" style="color:var(--accent);text-decoration:none;font-size:11px">Ver archivo ↗</a>`;
+        subidasDrive++;
+      } else {
+        driveStatusEl.innerHTML = `<span style="color:var(--danger)">⚠️ No se pudo subir a Drive</span> <span style="color:var(--text3)">(el archivo se guarda igual en el panel)</span>`;
+      }
+    }
+
+    const factura = {
+      id: Date.now().toString() + i,
+      tipo: f.tipo,
+      numero, cliente, cuit_cliente: cuit,
+      fecha, neto_gravado: neto, iva, monto: total,
+      cae, contratoId, descripcion: desc,
+      ncRef: ncRefId, ncRefNumero: ncRef,
+      anulada: false, pagada: false, montoCobrado: 0,
+      driveFileId,
+      fechaReg: new Date().toISOString()
+    };
+
+    DB.facturas.push(factura);
+    guardadas++;
+  }
+
+  saveDB();
+  renderTablaFacturas();
+
+  if (btnConfirmar) { btnConfirmar.disabled = false; btnConfirmar.textContent = 'Confirmar y Guardar Todo'; }
+
+  const driveMsg = subidasDrive > 0 ? ` · ${subidasDrive} subido(s) a Drive` : ' · Drive no disponible';
+  toast(`${guardadas} comprobante(s) guardado(s)${driveMsg}.`, subidasDrive > 0 ? 'success' : 'info');
+
+  // Esperar un momento para que el usuario vea el feedback antes de limpiar
+  await new Promise(r => setTimeout(r, 1800));
+  limpiarSeleccion();
+  document.getElementById('f-upload-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelarRevision() {
+  facturasPendientes = [];
+  document.getElementById('f-revision-card').style.display = 'none';
+}
+
+// ════════════════════════════════════════════
+// PREVIEW ARCHIVO
+// ════════════════════════════════════════════
+function previewFile(inputId, labelId) {
+  const file = document.getElementById(inputId).files[0];
+  if (file) document.getElementById(labelId).textContent = `✓ ${file.name}`;
+}
+
+// ════════════════════════════════════════════
+// GUARDAR CONTRATO
+// ════════════════════════════════════════════
+// ════════════════════════════════════════════
+// CONTRATOS — CARGA AUTOMÁTICA POR PDF
+// ════════════════════════════════════════════
+let contratosArchivos = [];
+let contratosPendientes = [];
+let contratosOrden = { campo: 'cliente', asc: true };
+
+function handleContratoDrop(event) {
+  event.preventDefault();
+  document.getElementById('c-drop-zone').classList.remove('drag');
+  cargarArchivosContrato(event.dataTransfer.files);
+}
+
+function procesarContratosPDF(files) {
+  cargarArchivosContrato(files);
+}
+
+function cargarArchivosContrato(files) {
+  const pdfs = Array.from(files).filter(f => f.type === 'application/pdf');
+  if (!pdfs.length) { toast('Solo se aceptan archivos PDF.', 'error'); return; }
+  contratosArchivos = pdfs.map(f => ({ file: f, nombre: f.name }));
+  const lista = document.getElementById('c-lista-archivos');
+  lista.innerHTML = contratosArchivos.map((a, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:7px;margin-bottom:6px">
+      <span style="font-size:16px">📄</span>
+      <span style="font-size:13px;color:var(--text);flex:1">${a.nombre}</span>
+      <span class="badge badge-pendiente" id="c-estado-${i}">Pendiente</span>
+    </div>`).join('');
+  document.getElementById('c-archivos-seleccionados').style.display = '';
+}
+
+function limpiarSeleccionContratos() {
+  contratosArchivos = [];
+  contratosPendientes = [];
+  document.getElementById('c-archivos-seleccionados').style.display = 'none';
+  document.getElementById('c-revision-card').style.display = 'none';
+  document.getElementById('c-pdfs').value = '';
+}
+
+async function procesarContratosConIA() {
+  if (!contratosArchivos.length) return;
+  const btn = document.getElementById('c-btn-procesar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Procesando...';
+  contratosPendientes = [];
+
+  for (let i = 0; i < contratosArchivos.length; i++) {
+    const archivo = contratosArchivos[i];
+    const estadoEl = document.getElementById(`c-estado-${i}`);
+    estadoEl.textContent = 'Procesando...';
+    estadoEl.className = 'badge badge-parcial';
+
+    try {
+      const base64 = await fileToBase64(archivo.file);
+      const prompt = `Analizá este presupuesto/contrato argentino y extraé los datos. Devolvé ÚNICAMENTE un objeto JSON con este formato exacto, sin texto adicional:
+{
+  "fecha": "YYYY-MM-DD",
+  "cliente": "nombre del cliente",
+  "obra": "dirección o nombre de la obra",
+  "concepto": "título o concepto del trabajo",
+  "monto": 0.00,
+  "moneda": "USD" o "ARS",
+  "forma_pago": "texto de la forma de pago tal como aparece",
+  "tipo": "gestion" si es gestión municipal, "arquitectura" si es estudio de arquitectura, "ambos" si incluye ambos
+}
+Si el monto incluye IVA, extraé el monto NETO sin IVA. Si dice "a convenir" en el precio, poné 0.`;
+
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-5',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+      if (!data.content) throw new Error('Respuesta inesperada');
+      const text = data.content.map(b => b.text || '').join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      parsed._archivo = archivo;
+      parsed._idx = i;
+      contratosPendientes.push(parsed);
+      estadoEl.textContent = '✓ Leído';
+      estadoEl.className = 'badge badge-pagado';
+    } catch(e) {
+      estadoEl.textContent = 'Error';
+      estadoEl.className = 'badge badge-anulada';
+      toast(`Error procesando ${archivo.nombre}: ${e.message}`, 'error');
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✨ Procesar con IA';
+
+  if (contratosPendientes.length) {
+    renderRevisionContratos();
+    document.getElementById('c-revision-card').style.display = '';
+    document.getElementById('c-revision-card').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function renderRevisionContratos() {
+  document.getElementById('c-revision-contenido').innerHTML = contratosPendientes.map((c, i) => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px">
+      <div style="font-weight:600;color:var(--text);margin-bottom:16px">📄 ${c._archivo.nombre}</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cliente</label>
+          <input type="text" id="rc-cliente-${i}" value="${c.cliente||''}">
+        </div>
+        <div class="form-group">
+          <label>Dirección / Obra</label>
+          <input type="text" id="rc-obra-${i}" value="${c.obra||''}">
+        </div>
+        <div class="form-group full">
+          <label>Concepto / Trabajo</label>
+          <input type="text" id="rc-concepto-${i}" value="${c.concepto||''}">
+        </div>
+        <div class="form-group">
+          <label>Monto Total</label>
+          <input type="number" id="rc-monto-${i}" value="${c.monto||0}">
+        </div>
+        <div class="form-group">
+          <label>Moneda</label>
+          <select id="rc-moneda-${i}">
+            <option value="USD" ${c.moneda==='USD'?'selected':''}>Dólares (USD)</option>
+            <option value="ARS" ${c.moneda==='ARS'?'selected':''}>Pesos (ARS)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="rc-fecha-${i}" value="${c.fecha||''}">
+        </div>
+        <div class="form-group">
+          <label>Tipo de Servicio</label>
+          <select id="rc-tipo-${i}">
+            <option value="arquitectura" ${c.tipo==='arquitectura'?'selected':''}>Estudio de Arquitectura</option>
+            <option value="gestion" ${c.tipo==='gestion'?'selected':''}>Gestión Municipal</option>
+            <option value="ambos" ${c.tipo==='ambos'?'selected':''}>Ambos</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Forma de Pago</label>
+          <input type="text" id="rc-pago-${i}" value="${c.forma_pago||''}">
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function confirmarContratos() {
+  contratosPendientes.forEach((c, i) => {
+    const contrato = {
+      id: Date.now().toString() + i,
+      cliente: document.getElementById(`rc-cliente-${i}`).value.trim(),
+      obra: document.getElementById(`rc-obra-${i}`).value.trim(),
+      concepto: document.getElementById(`rc-concepto-${i}`).value.trim(),
+      monto: parseFloat(document.getElementById(`rc-monto-${i}`).value) || 0,
+      moneda: document.getElementById(`rc-moneda-${i}`).value,
+      fecha: document.getElementById(`rc-fecha-${i}`).value,
+      tipo: document.getElementById(`rc-tipo-${i}`).value,
+      forma_pago: document.getElementById(`rc-pago-${i}`).value.trim(),
+      fechaReg: new Date().toISOString()
+    };
+    DB.contratos.push(contrato);
+  });
+  saveDB();
+  renderTablaContratos();
+  limpiarSeleccionContratos();
+  toast(`${contratosPendientes.length} contrato(s) guardado(s) correctamente.`, 'success');
+}
+
+function cancelarRevisionContratos() {
+  contratosPendientes = [];
+  document.getElementById('c-revision-card').style.display = 'none';
+}
+
+function ordenarContratos(campo) {
+  if (contratosOrden.campo === campo) {
+    contratosOrden.asc = !contratosOrden.asc;
+  } else {
+    contratosOrden.campo = campo;
+    contratosOrden.asc = true;
+  }
+  renderTablaContratos();
+}
+
+// ════════════════════════════════════════════
+// TABLA CONTRATOS
+// ════════════════════════════════════════════
+function renderTablaContratos() {
+  const tbody = document.getElementById('tabla-contratos');
+
+  // Combinar contratos reales + presupuestos aprobados (convertidos a formato contrato)
+  const presAprobados = (DB.presupuestos || [])
+    .filter(p => p.estado === 'aprobado')
+    .map(p => ({
+      id: p.id,
+      _esPresupuesto: true,
+      cliente: p.cliente,
+      obra: p.obra,
+      concepto: p.concepto,
+      monto: p.monto,
+      moneda: p.moneda,
+      fecha: p.fechaAprobacion || p.fecha,
+      tipo: p.tipo,
+      forma_pago: p.forma_pago,
+      nombreAlternativo: p.nombreAlternativo || ''
+    }));
+
+  const todos = [...DB.contratos, ...presAprobados];
+
+  if (!todos.length) {
+    tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">Aprobá presupuestos para que aparezcan acá como contratos</div></div></td></tr>';
+    return;
+  }
+
+  // Ordenar
+  const sorted = todos.sort((a, b) => {
+    const campo = contratosOrden.campo;
+    const va = (a[campo] || a.descripcion || '').toLowerCase();
+    const vb = (b[campo] || b.descripcion || '').toLowerCase();
+    return contratosOrden.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+
+  tbody.innerHTML = sorted.map(c => {
+    // Facturas vinculadas a este contrato
+    const facturasVinculadas = DB.facturas.filter(f =>
+      f.contratoId === c.id && f.tipo !== 'nc' && !f.anulada
+    );
+
+    // Facturado USD: suma de USD declarados en concepto de factura
+    let facturadoUSD = 0;
+    let facturadoARS = 0;
+    let ivaTotal = 0;
+
+    facturasVinculadas.forEach(f => {
+      // Buscar patrón "X usd" o "USD X" en descripción
+      const desc = (f.descripcion || '').toLowerCase();
+      const match = desc.match(/(\d[\d.,]*)\s*usd|usd\s*(\d[\d.,]*)/i);
+      if (match) {
+        const usdStr = (match[1] || match[2] || '').replace(/\./g,'').replace(',','.');
+        facturadoUSD += parseFloat(usdStr) || 0;
+      } else {
+        facturadoARS += f.neto_gravado || 0;
+      }
+      ivaTotal += f.iva || 0;
+    });
+
+    // Cobrado en mano vinculado al contrato
+    const pagosMano = DB.pagosMano.filter(p => p.contratoId === c.id);
+    const manoARS = pagosMano.filter(p => p.moneda === 'ARS').reduce((s,p) => s+p.monto, 0);
+    const manoUSD = pagosMano.filter(p => p.moneda === 'USD').reduce((s,p) => s+p.monto, 0);
+    const manoTexto = [
+      manoUSD ? 'U$S ' + fmt(manoUSD) : '',
+      manoARS ? '$' + fmt(manoARS) : ''
+    ].filter(Boolean).join(' + ') || '—';
+
+    // Saldo pendiente en USD (solo si contrato en USD)
+    let saldoTexto = '—';
+    if (c.moneda === 'USD') {
+      const saldo = c.monto - facturadoUSD - manoUSD;
+      saldoTexto = `<span style="color:${saldo > 0 ? 'var(--danger)' : 'var(--success)'}">U$S ${fmt(Math.max(0, saldo))}</span>`;
+    } else {
+      const cobradoTotal = facturadoARS + manoARS;
+      const saldo = c.monto - cobradoTotal;
+      saldoTexto = `<span style="color:${saldo > 0 ? 'var(--danger)' : 'var(--success)'}">$${fmt(Math.max(0, saldo))}</span>`;
+    }
+
+    return `<tr>
+      <td style="font-weight:500">
+        ${c.cliente}
+        ${c.nombreAlternativo ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">🔗 ${c.nombreAlternativo}</div>` : ''}
+      </td>
+      <td style="font-size:12px;color:var(--text2)">${c.obra || c.descripcion || '—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${c.concepto || c.descripcion || '—'}</td>
+      <td>${c.moneda === 'USD' ? `<span class="badge badge-dolares">U$S ${fmt(c.monto)}</span>` : '—'}</td>
+      <td>${c.moneda === 'ARS' ? `<span class="badge badge-pesos">$ ${fmt(c.monto)}</span>` : '—'}</td>
+      <td style="color:var(--success)">${facturadoUSD ? 'U$S ' + fmt(facturadoUSD) : '—'}</td>
+      <td style="color:var(--accent)">${facturadoARS ? '$' + fmt(facturadoARS) : '—'}</td>
+      <td style="color:var(--text2)">${ivaTotal ? '$' + fmt(ivaTotal) : '—'}</td>
+      <td>${manoTexto}</td>
+      <td>${saldoTexto}</td>
+      <td style="font-size:12px;color:var(--text3)">${fmtFecha(c.fecha)}</td>
+    </tr>`;
+  }).join('');
+}
+
+
+
+function renderTablaFacturas() {
+  const tbody = document.getElementById('tabla-facturas');
+  const contador = document.getElementById('f-contador');
+  const total = DB.facturas.filter(f => f.tipo === 'factura' && !f.anulada).length;
+  const nc = DB.facturas.filter(f => f.tipo === 'nc').length;
+  if (contador) contador.textContent = `${total} factura(s) · ${nc} nota(s) de crédito`;
+
+  if (!DB.facturas.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧾</div><div class="empty-text">Subí PDFs arriba para registrar facturas automáticamente</div></div></td></tr>';
+    return;
+  }
+  const sorted = [...DB.facturas].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  tbody.innerHTML = sorted.map(f => {
+    const estadoPago = f.anulada ? 'anulada' : f.pagada ? 'pagado' : f.montoCobrado > 0 ? 'parcial' : 'pendiente';
+    const estadoLabel = { anulada:'Anulada', pagado:'Pagada', parcial:'Pago Parcial', pendiente:'Pendiente' };
+    const ncInfo = f.tipo === 'nc' && f.ncRefNumero ? `<div style="font-size:11px;color:var(--text3)">Anula: ${f.ncRefNumero}</div>` : '';
+    return `<tr>
+      <td><div>${f.numero}</div>${ncInfo}</td>
+      <td><span class="badge ${f.tipo==='nc'?'badge-anulada':f.tipo==='facturab'?'badge-gestion':'badge-facturado'}">${f.tipo==='nc'?'Nota Crédito':f.tipo==='facturab'?'Factura B':'Factura A'}</span></td>
+      <td><div>${f.cliente}</div><div style="font-size:11px;color:var(--text3)">${f.cuit_cliente||''}</div></td>
+      <td>$${fmt(f.neto_gravado||0)}</td>
+      <td style="color:var(--accent)">$${fmt(f.monto||0)}</td>
+      <td>${fmtFecha(f.fecha)}</td>
+      <td><span class="badge badge-${estadoPago}">${estadoLabel[estadoPago]}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// COLABORADORES
+// ════════════════════════════════════════════
+function guardarColaborador() {
+  const nombre = document.getElementById('col-nombre').value.trim();
+  const apellido = document.getElementById('col-apellido').value.trim();
+  if (!nombre || !apellido) { toast('Completá nombre y apellido.', 'error'); return; }
+
+  DB.colaboradores.push({
+    id: Date.now().toString(),
+    nombre, apellido,
+    fechaReg: new Date().toISOString()
+  });
+  saveDB();
+  renderColaboradores();
+  document.getElementById('col-nombre').value = '';
+  document.getElementById('col-apellido').value = '';
+  toast('Colaborador agregado.', 'success');
+}
+
+function eliminarColaborador(id) {
+  if (!confirm('¿Eliminár este colaborador?')) return;
+  DB.colaboradores = DB.colaboradores.filter(c => c.id !== id);
+  saveDB();
+  renderColaboradores();
+  toast('Colaborador eliminado.', 'info');
+}
+
+function renderColaboradores() {
+  const tbody = document.getElementById('tabla-colaboradores');
+  if (!tbody) return;
+  if (!DB.colaboradores.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🤝</div><div class="empty-text">No hay colaboradores registrados aún</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = DB.colaboradores.map(c => `
+    <tr>
+      <td>${c.nombre}</td>
+      <td>${c.apellido}</td>
+      <td style="color:var(--text3);font-size:12px">${fmtFecha(c.fechaReg?.split('T')[0])}</td>
+      <td><button class="btn-sm btn-danger" style="padding:4px 10px;font-size:11px" onclick="eliminarColaborador('${c.id}')">Eliminar</button></td>
+    </tr>`).join('');
+}
+
+// ════════════════════════════════════════════
+// REPARTO CON COLABORADORES (Pagos en Mano)
+// ════════════════════════════════════════════
+let filaRepartoIdx = 0;
+
+function onCompartidoChange() {
+  const val = document.getElementById('pm-compartido').value;
+  const panel = document.getElementById('pm-reparto-panel');
+  if (val === 'si') {
+    panel.style.display = '';
+    if (document.getElementById('pm-reparto-lista').children.length === 0) agregarFilaReparto();
+  } else {
+    panel.style.display = 'none';
+    document.getElementById('pm-reparto-lista').innerHTML = '';
+    filaRepartoIdx = 0;
+  }
+}
+
+function agregarFilaReparto() {
+  const idx = filaRepartoIdx++;
+  const colOpts = DB.colaboradores.length
+    ? DB.colaboradores.map(c => `<option value="${c.id}">${c.nombre} ${c.apellido}</option>`).join('')
+    : '<option value="">— Sin colaboradores registrados —</option>';
+
+  const fila = document.createElement('div');
+  fila.id = `reparto-fila-${idx}`;
+  fila.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:10px;background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border)';
+  fila.innerHTML = `
+    <div class="form-group" style="margin:0">
+      <label>Colaborador</label>
+      <select id="rep-col-${idx}">${colOpts}</select>
+    </div>
+    <div class="form-group" style="margin:0">
+      <label>Monto</label>
+      <input type="number" id="rep-monto-${idx}" placeholder="0">
+    </div>
+    <div class="form-group" style="margin:0">
+      <label>Moneda</label>
+      <select id="rep-moneda-${idx}" onchange="onRepartoMonedaChange(${idx})">
+        <option value="ARS">Pesos (ARS)</option>
+        <option value="USD">Dólares (USD)</option>
+      </select>
+    </div>
+    <div class="form-group" id="rep-tc-group-${idx}" style="margin:0">
+      <label>Tipo de cambio</label>
+      <input type="number" id="rep-tc-${idx}" placeholder="Ej: 1400">
+    </div>
+    <button type="button" onclick="eliminarFilaReparto(${idx})"
+      style="background:none;border:1px solid rgba(184,80,80,0.3);border-radius:7px;color:var(--danger);
+             padding:8px 12px;cursor:pointer;font-size:16px;line-height:1;align-self:end;margin-bottom:1px">✕</button>`;
+  document.getElementById('pm-reparto-lista').appendChild(fila);
+}
+
+function onRepartoMonedaChange(idx) {
+  const moneda = document.getElementById(`rep-moneda-${idx}`).value;
+  document.getElementById(`rep-tc-group-${idx}`).style.display = moneda === 'ARS' ? '' : 'none';
+}
+
+function eliminarFilaReparto(idx) {
+  const fila = document.getElementById(`reparto-fila-${idx}`);
+  if (fila) fila.remove();
+}
+
+function leerReparto() {
+  const filas = document.querySelectorAll('[id^="reparto-fila-"]');
+  const resultado = [];
+  filas.forEach(fila => {
+    const idx = fila.id.replace('reparto-fila-', '');
+    const colId = document.getElementById(`rep-col-${idx}`)?.value;
+    const monto = parseFloat(document.getElementById(`rep-monto-${idx}`)?.value) || 0;
+    const moneda = document.getElementById(`rep-moneda-${idx}`)?.value || 'ARS';
+    const tc = moneda === 'ARS' ? (parseFloat(document.getElementById(`rep-tc-${idx}`)?.value) || null) : null;
+    if (colId && monto) {
+      const col = DB.colaboradores.find(c => c.id === colId);
+      resultado.push({ colaboradorId: colId, nombreCompleto: col ? `${col.nombre} ${col.apellido}` : '—', monto, moneda, tc });
+    }
+  });
+  return resultado;
+}
+
+// ════════════════════════════════════════════
+// GUARDAR PAGO EN MANO
+// ════════════════════════════════════════════
+function onPagoMonedaChange() {
+  const moneda = document.getElementById('pm-moneda').value;
+  const tcGroup = document.getElementById('pm-tc-group');
+  tcGroup.style.display = moneda === 'ARS' ? '' : 'none';
+  if (moneda !== 'ARS') document.getElementById('pm-tc').value = '';
+}
+
+function updatePagoManoSelects() {
+  // Poblar select de clientes con los únicos clientes de contratos
+  const clienteSel = document.getElementById('pm-cliente');
+  const clientes = [...new Set(DB.contratos.map(c => c.cliente))].filter(Boolean).sort();
+  clienteSel.innerHTML = '<option value="">— Seleccioná un cliente —</option>' +
+    clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  // Reset cascada
+  document.getElementById('pm-obra').innerHTML = '<option value="">— Primero elegí un cliente —</option>';
+  document.getElementById('pm-obra').disabled = true;
+  document.getElementById('pm-contrato').innerHTML = '<option value="">— Primero elegí una dirección —</option>';
+  document.getElementById('pm-contrato').disabled = true;
+
+  // Facturas
+  const facSel = document.getElementById('pm-factura');
+  facSel.innerHTML = '<option value="">Sin factura específica</option>' +
+    DB.facturas.filter(f => f.tipo !== 'nc' && !f.anulada)
+      .map(f => `<option value="${f.id}">${f.numero} — ${f.cliente}</option>`).join('');
+}
+
+function onPmClienteChange() {
+  const cliente = document.getElementById('pm-cliente').value;
+  const obraSel = document.getElementById('pm-obra');
+  const trabajoSel = document.getElementById('pm-contrato');
+
+  trabajoSel.innerHTML = '<option value="">— Primero elegí una dirección —</option>';
+  trabajoSel.disabled = true;
+
+  if (!cliente) {
+    obraSel.innerHTML = '<option value="">— Primero elegí un cliente —</option>';
+    obraSel.disabled = true;
+    return;
+  }
+
+  const obras = [...new Set(
+    DB.contratos.filter(c => c.cliente === cliente).map(c => c.obra || '—')
+  )].sort();
+
+  obraSel.innerHTML = '<option value="">— Seleccioná una dirección —</option>' +
+    obras.map(o => `<option value="${o}">${o}</option>`).join('');
+  obraSel.disabled = false;
+}
+
+function onPmObraChange() {
+  const cliente = document.getElementById('pm-cliente').value;
+  const obra = document.getElementById('pm-obra').value;
+  const trabajoSel = document.getElementById('pm-contrato');
+
+  if (!obra) {
+    trabajoSel.innerHTML = '<option value="">— Primero elegí una dirección —</option>';
+    trabajoSel.disabled = true;
+    return;
+  }
+
+  const contratos = DB.contratos.filter(c => c.cliente === cliente && (c.obra || '—') === obra);
+  trabajoSel.innerHTML = '<option value="">— Seleccioná un trabajo —</option>' +
+    contratos.map(c => `<option value="${c.id}">${c.concepto || c.descripcion || 'Sin descripción'}</option>`).join('');
+  trabajoSel.disabled = false;
+}
+
+function guardarPagoMano() {
+  const cliente = document.getElementById('pm-cliente').value.trim();
+  const contratoId = document.getElementById('pm-contrato').value;
+  const facturaId = document.getElementById('pm-factura').value;
+  const monto = parseFloat(document.getElementById('pm-monto').value);
+  const moneda = document.getElementById('pm-moneda').value;
+  const fecha = document.getElementById('pm-fecha').value;
+  const obs = document.getElementById('pm-obs').value.trim();
+  const tc = moneda === 'ARS' ? (parseFloat(document.getElementById('pm-tc').value) || null) : null;
+
+  if (!cliente || !monto || !fecha) { toast('Completá cliente, monto y fecha.', 'error'); return; }
+
+  const compartido = document.getElementById('pm-compartido').value;
+  const reparto = compartido === 'si' ? leerReparto() : [];
+
+  const pago = { id: Date.now().toString(), cliente, contratoId, facturaId, monto, moneda, tc, fecha, obs, reparto, fechaReg: new Date().toISOString() };
+
+  // Actualizar estado de factura si aplica
+  if (facturaId) {
+    const fac = DB.facturas.find(f => f.id === facturaId);
+    if (fac) {
+      fac.montoCobrado = (fac.montoCobrado || 0) + monto;
+      if (fac.montoCobrado >= fac.monto) fac.pagada = true;
+    }
+  }
+
+  DB.pagosMano.push(pago);
+  saveDB();
+  renderTablaPagosMano();
+  toast('Pago registrado correctamente.', 'success');
+
+  // Reset del formulario
+  document.getElementById('pm-cliente').value = '';
+  document.getElementById('pm-obra').innerHTML = '<option value="">— Primero elegí un cliente —</option>';
+  document.getElementById('pm-obra').disabled = true;
+  document.getElementById('pm-contrato').innerHTML = '<option value="">— Primero elegí una dirección —</option>';
+  document.getElementById('pm-contrato').disabled = true;
+  ['pm-monto','pm-fecha','pm-obs','pm-tc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pm-factura').value = '';
+  // Reset reparto
+  document.getElementById('pm-compartido').value = 'no';
+  document.getElementById('pm-reparto-panel').style.display = 'none';
+  document.getElementById('pm-reparto-lista').innerHTML = '';
+  filaRepartoIdx = 0;
+}
+
+function renderTablaPagosMano() {
+  const tbody = document.getElementById('tabla-pagos-mano');
+  if (!DB.pagosMano.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💵</div><div class="empty-text">No hay pagos en mano registrados</div></div></td></tr>';
+    return;
+  }
+  const sorted = [...DB.pagosMano].sort((a,b) => b.fecha.localeCompare(a.fecha));
+  tbody.innerHTML = sorted.map(p => {
+    const tcInfo = p.tc ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">TC: $${fmt(p.tc)}</div>` : '';
+    const repartoInfo = p.reparto?.length
+      ? `<div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">${p.reparto.map(r =>
+          `<div style="font-size:11px;color:var(--text3)">🤝 ${r.nombreCompleto}: ${r.moneda === 'ARS' ? '$' : 'U$S '}${fmt(r.monto)}${r.tc ? ` (TC $${fmt(r.tc)})` : ''}</div>`
+        ).join('')}</div>` : '';
+    // Referencia: si tiene contrato asociado, mostrar dirección y trabajo
+    let refCell = '—';
+    if (p.contratoId) {
+      const contrato = DB.contratos.find(c => c.id === p.contratoId);
+      if (contrato) {
+        refCell = `<div style="font-size:12px;font-weight:500">${contrato.obra || '—'}</div>
+                   <div style="font-size:11px;color:var(--text3)">${contrato.concepto || contrato.descripcion || ''}</div>`;
+      } else {
+        refCell = '<span class="badge badge-mano">Contrato</span>';
+      }
+    } else if (p.facturaId) {
+      const fac = DB.facturas.find(f => f.id === p.facturaId);
+      refCell = fac
+        ? `<span class="badge badge-facturado">${fac.numero}</span>`
+        : '<span class="badge badge-facturado">Factura</span>';
+    }
+    return `<tr>
+      <td>${fmtFecha(p.fecha)}</td>
+      <td>${p.cliente}</td>
+      <td>${fmt(p.monto)}</td>
+      <td><span class="badge badge-${p.moneda==='ARS'?'pesos':'dolares'}">${p.moneda}</span>${tcInfo}${repartoInfo}</td>
+      <td>${refCell}</td>
+      <td style="color:var(--text3);font-size:12px">${p.obs||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// EXTRACTO BANCARIO CON IA
+// ════════════════════════════════════════════
+async function procesarExtracto() {
+  const banco = document.getElementById('ex-banco').value.trim();
+  const periodo = document.getElementById('ex-periodo').value;
+  const file = document.getElementById('ex-pdf').files[0];
+
+  if (!file) { toast('Seleccioná un PDF primero.', 'error'); return; }
+
+  toast('Procesando extracto con IA... puede tardar unos segundos.', 'info');
+
+  // Leer PDF como base64
+  const base64 = await fileToBase64(file);
+
+  const contextoClientes = DB.contratos.map(c=>c.cliente).join(', ') || 'no hay clientes registrados aún';
+
+  const prompt = `Sos un asistente contable. Analizá este extracto bancario en PDF y extraé TODOS los créditos (ingresos/cobros recibidos) en la cuenta.
+
+Clientes conocidos de la empresa: ${contextoClientes}
+
+Para cada cobro, devolvé un JSON array con este formato exacto (sin texto adicional, solo JSON):
+[
+  {
+    "fecha": "YYYY-MM-DD",
+    "descripcion": "descripción tal como aparece en el extracto",
+    "monto": 12345.67,
+    "posibleCliente": "nombre del cliente si podés inferirlo de la descripción, sino null"
+  }
+]
+
+Solo incluir créditos (ingresos). Ignorar débitos. Si no hay movimientos, devolvé [].`;
+
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    if (!data.content) throw new Error('Respuesta inesperada: ' + JSON.stringify(data).substring(0,200));
+    const text = data.content.map(i=>i.text||'').join('');
+
+    // Parser robusto: extrae el primer array JSON válido del texto
+    let movs = [];
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      try { movs = JSON.parse(jsonMatch[0]); } catch(e2) {
+        throw new Error('No se pudo parsear la respuesta de la IA. Intentá de nuevo.');
+      }
+    }
+
+    if (!movs.length) { toast('No se encontraron cobros en el extracto.', 'info'); return; }
+
+    // Subir PDF original a Drive
+    let driveFileId = null;
+    driveFileId = await uploadToDrive(file, `EXTRACTO_${banco}_${periodo}.pdf`);
+
+    // Guardar para confirmación
+    pendingMovimientos = movs.map(m => ({ ...m, banco, periodo, driveFileId, confirmado: false, cliente: m.posibleCliente || '' }));
+
+    renderMovimientosPendientes();
+    document.getElementById('ex-resultado').style.display = '';
+    toast(`Se detectaron ${movs.length} cobros. Revisá y confirmá.`, 'success');
+
+  } catch(e) {
+    toast('Error al procesar el extracto: ' + e.message, 'error');
+  }
+}
+
+function renderMovimientosPendientes() {
+  const facturasDisp = DB.facturas.filter(f => f.tipo !== 'nc' && !f.anulada);
+  const facturasOpts = facturasDisp.map(f => `<option value="${f.id}">${f.numero} — ${f.cliente} (pendiente: $${fmt((f.monto||0)-(f.montoCobrado||0))})</option>`).join('');
+
+  document.getElementById('ex-movimientos').innerHTML = pendingMovimientos.map((m, i) => `
+    <div id="mov-card-${i}" style="background:var(--surface2);border-radius:10px;padding:18px;margin-bottom:14px;border:2px solid var(--danger)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <span style="font-weight:600;color:var(--text);font-size:15px">${fmtFecha(m.fecha)} — ARS ${fmt(m.monto)}</span>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${m.descripcion}</div>
+        </div>
+        <span id="mov-estado-badge-${i}" class="badge badge-pendiente">Sin asignar</span>
+      </div>
+
+      <!-- TIPO DE MOVIMIENTO -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Tipo de Movimiento</label>
+        <select id="mov-tipo-${i}" onchange="onTipoMovChange(${i})">
+          <option value="">— Seleccioná —</option>
+          <option value="ingreso_simple">Pago de una factura</option>
+          <option value="ingreso_multiple">Pago que cubre dos facturas</option>
+          <option value="propio">Transferencia propia / fondeo (no es ingreso)</option>
+        </select>
+      </div>
+
+      <!-- PANEL INGRESO SIMPLE -->
+      <div id="mov-panel-simple-${i}" style="display:none">
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Factura que cancela (parcial o total)</label>
+          <select id="mov-fac1-${i}" onchange="checkMovAsignado(${i})">
+            <option value="">Seleccioná una factura</option>
+            ${facturasOpts}
+          </select>
+        </div>
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:10px 14px;background:rgba(138,106,58,0.07);border:1px solid rgba(138,106,58,0.2);border-radius:8px;user-select:none">
+          <input type="checkbox" id="mov-retencion-${i}" onchange="checkMovAsignado(${i})"
+            style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">La diferencia corresponde a una retención de Ganancias</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">Si está marcado, la diferencia no se contabiliza como deuda pendiente</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- PANEL INGRESO MULTIPLE (cubre 2 facturas) -->
+      <div id="mov-panel-multiple-${i}" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+          <div class="form-group">
+            <label>Factura 1</label>
+            <select id="mov-facA-${i}" onchange="checkMovAsignado(${i})">
+              <option value="">Seleccioná factura</option>
+              ${facturasOpts}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Monto para Factura 1</label>
+            <input type="number" id="mov-montoA-${i}" placeholder="0" oninput="checkMovAsignado(${i})">
+          </div>
+          <div class="form-group">
+            <label>Factura 2</label>
+            <select id="mov-facB-${i}" onchange="checkMovAsignado(${i})">
+              <option value="">Seleccioná factura</option>
+              ${facturasOpts}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Monto para Factura 2</label>
+            <input type="number" id="mov-montoB-${i}" placeholder="0" oninput="checkMovAsignado(${i})">
+          </div>
+        </div>
+        <div id="mov-alerta-montos-${i}" style="font-size:12px;color:var(--danger);display:none">⚠️ La suma de los montos debe ser igual al total del movimiento (ARS ${fmt(m.monto)})</div>
+      </div>
+
+      <!-- PANEL PROPIO -->
+      <div id="mov-panel-propio-${i}" style="display:none">
+        <div class="form-group">
+          <label>Descripción (opcional)</label>
+          <input type="text" id="mov-desc-propio-${i}" placeholder="Ej: Fondeo desde cuenta personal" oninput="checkMovAsignado(${i})">
+        </div>
+      </div>
+    </div>`).join('');
+
+  actualizarProgresoExtracto();
+}
+
+function onTipoMovChange(i) {
+  const tipo = document.getElementById(`mov-tipo-${i}`).value;
+  document.getElementById(`mov-panel-simple-${i}`).style.display = tipo === 'ingreso_simple' ? '' : 'none';
+  document.getElementById(`mov-panel-multiple-${i}`).style.display = tipo === 'ingreso_multiple' ? '' : 'none';
+  document.getElementById(`mov-panel-propio-${i}`).style.display = tipo === 'propio' ? '' : 'none';
+  checkMovAsignado(i);
+}
+
+function checkMovAsignado(i) {
+  const tipo = document.getElementById(`mov-tipo-${i}`)?.value;
+  const m = pendingMovimientos[i];
+  let asignado = false;
+
+  if (tipo === 'ingreso_simple') {
+    asignado = !!document.getElementById(`mov-fac1-${i}`)?.value;
+  } else if (tipo === 'ingreso_multiple') {
+    const facA = document.getElementById(`mov-facA-${i}`)?.value;
+    const facB = document.getElementById(`mov-facB-${i}`)?.value;
+    const montoA = parseFloat(document.getElementById(`mov-montoA-${i}`)?.value) || 0;
+    const montoB = parseFloat(document.getElementById(`mov-montoB-${i}`)?.value) || 0;
+    const suma = Math.round((montoA + montoB) * 100) / 100;
+    const total = Math.round(m.monto * 100) / 100;
+    const alertEl = document.getElementById(`mov-alerta-montos-${i}`);
+    if (facA && facB && montoA > 0 && montoB > 0) {
+      alertEl.style.display = suma !== total ? '' : 'none';
+      asignado = suma === total;
+    }
+  } else if (tipo === 'propio') {
+    asignado = true;
+  }
+
+  const card = document.getElementById(`mov-card-${i}`);
+  const badge = document.getElementById(`mov-estado-badge-${i}`);
+  if (asignado) {
+    card.style.borderColor = 'var(--success)';
+    badge.textContent = tipo === 'propio' ? 'Transferencia propia' : '✓ Asignado';
+    badge.className = 'badge badge-pagado';
+  } else {
+    card.style.borderColor = 'var(--danger)';
+    badge.textContent = 'Sin asignar';
+    badge.className = 'badge badge-pendiente';
+  }
+
+  pendingMovimientos[i]._asignado = asignado;
+  actualizarProgresoExtracto();
+}
+
+function actualizarProgresoExtracto() {
+  const total = pendingMovimientos.length;
+  const asignados = pendingMovimientos.filter(m => m._asignado).length;
+  const btn = document.getElementById('btn-confirmar-extracto');
+  const prog = document.getElementById('ex-progreso');
+  if (prog) prog.textContent = `${asignados} de ${total} asignados`;
+  if (btn) btn.disabled = asignados < total;
+}
+
+function confirmarExtracto() {
+  pendingMovimientos.forEach((m, i) => {
+    const tipo = document.getElementById(`mov-tipo-${i}`).value;
+
+    if (tipo === 'propio') {
+      const desc = document.getElementById(`mov-desc-propio-${i}`)?.value || '';
+      DB.cobrosBancarios.push({
+        id: Date.now().toString() + i,
+        fecha: m.fecha, descripcion: m.descripcion, monto: m.monto,
+        banco: m.banco, periodo: m.periodo, cliente: 'PROPIO',
+        tipo: 'propio', nota: desc, moneda: 'ARS',
+        fechaReg: new Date().toISOString()
+      });
+      return;
+    }
+
+    if (tipo === 'ingreso_simple') {
+      const facturaId = document.getElementById(`mov-fac1-${i}`).value;
+      const retencion = document.getElementById(`mov-retencion-${i}`)?.checked || false;
+      const fac = DB.facturas.find(f => f.id === facturaId);
+      if (fac) {
+        fac.montoCobrado = (fac.montoCobrado || 0) + m.monto;
+        // Pagada solo si cobró el total exacto; la retención NO la marca como pagada
+        if (fac.montoCobrado >= fac.monto) fac.pagada = true;
+        if (retencion) fac.retencionGanancias = true;
+      }
+      DB.cobrosBancarios.push({
+        id: Date.now().toString() + i,
+        fecha: m.fecha, descripcion: m.descripcion, monto: m.monto,
+        banco: m.banco, periodo: m.periodo,
+        cliente: fac?.cliente || '', facturaId, tipo: 'ingreso',
+        retencion,
+        moneda: 'ARS', fechaReg: new Date().toISOString()
+      });
+      return;
+    }
+
+    if (tipo === 'ingreso_multiple') {
+      const facAId = document.getElementById(`mov-facA-${i}`).value;
+      const facBId = document.getElementById(`mov-facB-${i}`).value;
+      const montoA = parseFloat(document.getElementById(`mov-montoA-${i}`).value) || 0;
+      const montoB = parseFloat(document.getElementById(`mov-montoB-${i}`).value) || 0;
+
+      [{ facId: facAId, monto: montoA }, { facId: facBId, monto: montoB }].forEach(({ facId, monto }, j) => {
+        const fac = DB.facturas.find(f => f.id === facId);
+        if (fac) {
+          fac.montoCobrado = (fac.montoCobrado || 0) + monto;
+          if (fac.montoCobrado >= fac.monto) fac.pagada = true;
+        }
+        DB.cobrosBancarios.push({
+          id: Date.now().toString() + i + j,
+          fecha: m.fecha, descripcion: m.descripcion + ` (parte ${j+1}/2)`,
+          monto, banco: m.banco, periodo: m.periodo,
+          cliente: fac?.cliente || '', facturaId: facId, tipo: 'ingreso',
+          moneda: 'ARS', fechaReg: new Date().toISOString()
+        });
+      });
+    }
+  });
+
+  saveDB();
+  pendingMovimientos = [];
+  document.getElementById('ex-resultado').style.display = 'none';
+  renderTablaBancarios();
+  toast('Cobros bancarios guardados correctamente.', 'success');
+}
+
+function cancelarExtracto() {
+  pendingMovimientos = [];
+  document.getElementById('ex-resultado').style.display = 'none';
+}
+
+function renderTablaBancarios() {
+  const tbody = document.getElementById('tabla-bancarios');
+  if (!DB.cobrosBancarios.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏦</div><div class="empty-text">No hay cobros bancarios registrados</div></div></td></tr>';
+    return;
+  }
+  const sorted = [...DB.cobrosBancarios].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  tbody.innerHTML = sorted.map(c => {
+    const tipoBadge = c.tipo === 'propio'
+      ? '<span class="badge badge-sin-factura">Transferencia propia</span>'
+      : c.retencion
+        ? '<span class="badge badge-banco">Ingreso</span> <span class="badge badge-gestion" style="font-size:10px">Ret. Ganancias</span>'
+        : '<span class="badge badge-banco">Ingreso</span>';
+
+    // Asignación: mostrar factura si está vinculada
+    let asignacion = '';
+    if (c.tipo === 'propio') {
+      asignacion = `<span style="color:var(--text3);font-size:12px">${c.nota||'Fondeo propio'}</span>`;
+    } else if (c.facturaId) {
+      const fac = DB.facturas.find(f => f.id === c.facturaId);
+      asignacion = fac
+        ? `<div style="font-size:12px">${c.cliente}</div><div style="font-size:11px;color:var(--text3)">${fac.numero}</div>`
+        : `<span style="color:var(--text3)">${c.cliente||'—'}</span>`;
+    } else {
+      asignacion = c.cliente || '<span style="color:var(--text3)">Sin asignar</span>';
+    }
+
+    return `<tr>
+      <td>${fmtFecha(c.fecha)}</td>
+      <td style="font-size:12px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${c.descripcion}">${c.descripcion}</td>
+      <td>${asignacion}</td>
+      <td style="color:${c.tipo==='propio'?'var(--text3)':'var(--accent)'}">ARS ${fmt(c.monto)}</td>
+      <td>${tipoBadge}</td>
+      <td>${c.banco}</td>
+      <td><button class="btn-sm btn-ghost" style="padding:5px 10px;font-size:11px" onclick="abrirEditarCobro('${c.id}')">✏️ Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// EDITAR COBRO BANCARIO
+// ════════════════════════════════════════════
+let editandoCobroId = null;
+
+function abrirEditarCobro(id) {
+  editandoCobroId = id;
+  const cobro = DB.cobrosBancarios.find(c => c.id === id);
+  if (!cobro) return;
+
+  // Detalle del movimiento
+  document.getElementById('modal-cobro-detalle').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:600;color:var(--text)">${fmtFecha(cobro.fecha)} — ARS ${fmt(cobro.monto)}</div>
+        <div style="margin-top:4px">${cobro.descripcion}</div>
+        <div style="margin-top:2px;color:var(--text3)">Banco: ${cobro.banco}</div>
+      </div>
+    </div>`;
+
+  // Poblar selects de facturas
+  const facturasOpts = DB.facturas
+    .filter(f => f.tipo !== 'nc' && !f.anulada)
+    .map(f => `<option value="${f.id}">${f.numero} — ${f.cliente}</option>`).join('');
+  const optsConBlank = `<option value="">Seleccioná</option>${facturasOpts}`;
+  ['edit-fac1','edit-facA','edit-facB'].forEach(id => {
+    document.getElementById(id).innerHTML = optsConBlank;
+  });
+
+  // Pre-cargar valores actuales
+  const tipo = cobro.tipo === 'propio' ? 'propio' : cobro.tipo === 'ingreso_multiple' ? 'ingreso_multiple' : 'ingreso_simple';
+  document.getElementById('edit-tipo').value = tipo;
+
+  if (tipo === 'ingreso_simple' && cobro.facturaId) {
+    document.getElementById('edit-fac1').value = cobro.facturaId;
+    document.getElementById('edit-retencion').checked = cobro.retencion || false;
+  }
+  if (tipo === 'propio') {
+    document.getElementById('edit-nota-propio').value = cobro.nota || '';
+  }
+
+  onEditTipoChange();
+  document.getElementById('modal-editar-cobro').classList.add('open');
+}
+
+function onEditTipoChange() {
+  const tipo = document.getElementById('edit-tipo').value;
+  document.getElementById('edit-panel-simple').style.display = tipo === 'ingreso_simple' ? '' : 'none';
+  document.getElementById('edit-panel-multiple').style.display = tipo === 'ingreso_multiple' ? '' : 'none';
+  document.getElementById('edit-panel-propio').style.display = tipo === 'propio' ? '' : 'none';
+}
+
+function guardarEdicionCobro() {
+  const cobro = DB.cobrosBancarios.find(c => c.id === editandoCobroId);
+  if (!cobro) return;
+
+  const tipo = document.getElementById('edit-tipo').value;
+
+  // Revertir impacto anterior en facturas
+  if (cobro.facturaId) {
+    const facAnterior = DB.facturas.find(f => f.id === cobro.facturaId);
+    if (facAnterior) {
+      facAnterior.montoCobrado = Math.max(0, (facAnterior.montoCobrado || 0) - cobro.monto);
+      facAnterior.pagada = facAnterior.montoCobrado >= facAnterior.monto;
+    }
+  }
+
+  // Aplicar nueva asignación
+  if (tipo === 'propio') {
+    cobro.tipo = 'propio';
+    cobro.nota = document.getElementById('edit-nota-propio').value;
+    cobro.facturaId = null;
+    cobro.cliente = 'PROPIO';
+  } else if (tipo === 'ingreso_simple') {
+    const facturaId = document.getElementById('edit-fac1').value;
+    const retencion = document.getElementById('edit-retencion')?.checked || false;
+    const fac = DB.facturas.find(f => f.id === facturaId);
+    cobro.tipo = 'ingreso';
+    cobro.facturaId = facturaId;
+    cobro.retencion = retencion;
+    cobro.cliente = fac?.cliente || cobro.cliente;
+    if (fac) {
+      fac.montoCobrado = (fac.montoCobrado || 0) + cobro.monto;
+      if (fac.montoCobrado >= fac.monto) fac.pagada = true;
+      if (retencion) fac.retencionGanancias = true;
+    }
+  } else if (tipo === 'ingreso_multiple') {
+    const facAId = document.getElementById('edit-facA').value;
+    const facBId = document.getElementById('edit-facB').value;
+    const montoA = parseFloat(document.getElementById('edit-montoA').value) || 0;
+    const montoB = parseFloat(document.getElementById('edit-montoB').value) || 0;
+    cobro.tipo = 'ingreso_multiple';
+    cobro.facturaId = facAId;
+    cobro.facturaId2 = facBId;
+    cobro.montoFac1 = montoA;
+    cobro.montoFac2 = montoB;
+    const facA = DB.facturas.find(f => f.id === facAId);
+    const facB = DB.facturas.find(f => f.id === facBId);
+    cobro.cliente = facA?.cliente || facB?.cliente || cobro.cliente;
+    if (facA) { facA.montoCobrado = (facA.montoCobrado||0)+montoA; facA.pagada = facA.montoCobrado >= facA.monto; }
+    if (facB) { facB.montoCobrado = (facB.montoCobrado||0)+montoB; facB.pagada = facB.montoCobrado >= facB.monto; }
+  }
+
+  saveDB();
+  renderTablaBancarios();
+  renderDashboard();
+  cerrarModalEditar();
+  toast('Asignación actualizada correctamente.', 'success');
+}
+
+function eliminarCobro() {
+  if (!confirm('¿Seguro que querés eliminar este movimiento? Se revertirá su impacto en las facturas.')) return;
+  const cobro = DB.cobrosBancarios.find(c => c.id === editandoCobroId);
+  if (!cobro) return;
+
+  // Revertir impacto en factura
+  if (cobro.facturaId) {
+    const fac = DB.facturas.find(f => f.id === cobro.facturaId);
+    if (fac) {
+      fac.montoCobrado = Math.max(0, (fac.montoCobrado||0) - cobro.monto);
+      fac.pagada = fac.montoCobrado >= fac.monto;
+    }
+  }
+
+  DB.cobrosBancarios = DB.cobrosBancarios.filter(c => c.id !== editandoCobroId);
+  saveDB();
+  renderTablaBancarios();
+  renderDashboard();
+  cerrarModalEditar();
+  toast('Movimiento eliminado.', 'info');
+}
+
+function cerrarModalEditar() {
+  editandoCobroId = null;
+  document.getElementById('modal-editar-cobro').classList.remove('open');
+}
+
+// ════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════
+function renderDashboard() {
+  const mes = parseInt(document.getElementById('dash-mes')?.value || new Date().getMonth()+1);
+  const anio = parseInt(document.getElementById('dash-anio')?.value || new Date().getFullYear());
+
+  // Filtrar pagos del mes
+  const pagosMes = DB.pagosMano.filter(p => {
+    const d = new Date(p.fecha+'T00:00:00');
+    return d.getMonth()+1 === mes && d.getFullYear() === anio;
+  });
+
+  const bancariosMes = DB.cobrosBancarios.filter(c => {
+    const d = new Date(c.fecha+'T00:00:00');
+    return d.getMonth()+1 === mes && d.getFullYear() === anio;
+  });
+
+  // Totales
+  const totalManoARS = pagosMes.filter(p=>p.moneda==='ARS').reduce((s,p)=>s+p.monto,0);
+  const totalManoUSD = pagosMes.filter(p=>p.moneda==='USD').reduce((s,p)=>s+p.monto,0);
+  const totalBancoARS = bancariosMes.reduce((s,c)=>s+c.monto,0);
+
+  const cards = document.getElementById('dash-cards');
+  cards.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Cobrado en Mano (ARS)</div>
+      <div class="stat-value">$${fmt(totalManoARS)}</div>
+      <div class="stat-detail">${pagosMes.filter(p=>p.moneda==='ARS').length} operaciones</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cobrado en Mano (USD)</div>
+      <div class="stat-value" style="color:var(--success)">U$S ${fmt(totalManoUSD)}</div>
+      <div class="stat-detail">${pagosMes.filter(p=>p.moneda==='USD').length} operaciones</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cobrado por Banco (ARS)</div>
+      <div class="stat-value" style="color:var(--info)">$${fmt(totalBancoARS)}</div>
+      <div class="stat-detail">${bancariosMes.length} transferencias</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total ARS del Mes</div>
+      <div class="stat-value">$${fmt(totalManoARS + totalBancoARS)}</div>
+      <div class="stat-detail">Mano + Banco</div>
+    </div>`;
+
+  // Por cliente
+  const clienteMap = {};
+  [...pagosMes, ...bancariosMes].forEach(p => {
+    const cli = p.cliente || 'Sin asignar';
+    if (!clienteMap[cli]) clienteMap[cli] = { ars: 0, usd: 0 };
+    if (p.moneda === 'USD') clienteMap[cli].usd += p.monto;
+    else clienteMap[cli].ars += p.monto;
+  });
+
+  const tbodyCliente = document.getElementById('dash-por-cliente');
+  const clienteEntries = Object.entries(clienteMap);
+  tbodyCliente.innerHTML = clienteEntries.length ? clienteEntries.map(([cli, v]) =>
+    `<tr><td>${cli}</td><td>$${fmt(v.ars)}</td><td>${v.usd ? 'U$S '+fmt(v.usd) : '—'}</td></tr>`
+  ).join('') : '<tr><td colspan="3"><div class="empty-state" style="padding:20px"><div class="empty-text">Sin datos en este período</div></div></td></tr>';
+
+  // Canal
+  const tbodyCanal = document.getElementById('dash-canal');
+  tbodyCanal.innerHTML = `
+    <tr>
+      <td><span class="badge badge-mano">En Mano</span></td>
+      <td>$${fmt(totalManoARS)}</td>
+      <td>${totalManoUSD ? 'U$S '+fmt(totalManoUSD) : '—'}</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-banco">Bancario</span></td>
+      <td>$${fmt(totalBancoARS)}</td>
+      <td>—</td>
+    </tr>`;
+
+  // Deudas
+  renderDeudas();
+
+  // Gráfico
+  renderGrafico18Meses();
+}
+
+let chartInstance = null;
+
+function renderGrafico18Meses() {
+  const canvas = document.getElementById('ingresos-chart');
+  if (!canvas) return;
+
+  // Generar los últimos 18 meses
+  const meses = [];
+  const hoy = new Date();
+  for (let i = 17; i >= 0; i--) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    meses.push({ anio: d.getFullYear(), mes: d.getMonth() + 1 });
+  }
+
+  const labels = meses.map(m => {
+    const nombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `${nombres[m.mes-1]} ${String(m.anio).slice(2)}`;
+  });
+
+  const dataMano = meses.map(({ anio, mes }) =>
+    DB.pagosMano
+      .filter(p => {
+        if (p.moneda !== 'ARS') return false;
+        const d = new Date(p.fecha + 'T00:00:00');
+        return d.getMonth()+1 === mes && d.getFullYear() === anio;
+      })
+      .reduce((s, p) => s + p.monto, 0)
+  );
+
+  const dataBanco = meses.map(({ anio, mes }) =>
+    DB.cobrosBancarios
+      .filter(c => {
+        if (c.tipo === 'propio') return false;
+        const d = new Date(c.fecha + 'T00:00:00');
+        return d.getMonth()+1 === mes && d.getFullYear() === anio;
+      })
+      .reduce((s, c) => s + c.monto, 0)
+  );
+
+  // Destruir instancia anterior si existe
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  chartInstance = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'En mano (ARS)',
+          data: dataMano,
+          backgroundColor: 'rgba(138,106,58,0.65)',
+          borderColor: 'rgba(138,106,58,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: 'Bancario (ARS)',
+          data: dataBanco,
+          backgroundColor: 'rgba(64,96,176,0.60)',
+          borderColor: 'rgba(64,96,176,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#faf7f2',
+          borderColor: '#ddd6c8',
+          borderWidth: 1,
+          titleColor: '#1e1a14',
+          bodyColor: '#5a5040',
+          padding: 12,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('es-AR')}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: false,
+          grid: { color: 'rgba(180,160,130,0.25)', drawTicks: false },
+          ticks: { color: '#9a8e7a', font: { size: 11 }, maxRotation: 45 },
+          border: { color: '#ddd6c8' }
+        },
+        y: {
+          stacked: false,
+          grid: { color: 'rgba(180,160,130,0.25)', drawTicks: false },
+          ticks: {
+            color: '#9a8e7a',
+            font: { size: 11 },
+            callback: v => v >= 1000000 ? `$${(v/1000000).toFixed(1)}M` : v >= 1000 ? `$${(v/1000).toFixed(0)}K` : `$${v}`
+          },
+          border: { color: '#ddd6c8' }
+        }
+      }
+    }
+  });
+}
+
+function renderDeudas() {
+  const tbody = document.getElementById('dash-deuda');
+  const rows = [];
+
+  // ── Deudas por contrato ──────────────────────────────────────────
+  DB.contratos.forEach(contrato => {
+    const cobradoMano = DB.pagosMano
+      .filter(p => p.contratoId === contrato.id && p.moneda === contrato.moneda)
+      .reduce((s,p) => s + p.monto, 0);
+    const saldo = contrato.monto - cobradoMano;
+    if (saldo > 0) {
+      rows.push({
+        cliente: contrato.cliente,
+        origen: 'Contrato',
+        fecha: contrato.fecha || null,
+        total: `${contrato.moneda === 'USD' ? 'U$S' : 'ARS'} ${fmt(contrato.monto)}`,
+        cobrado: `${contrato.moneda === 'USD' ? 'U$S' : 'ARS'} ${fmt(cobradoMano)}`,
+        retencion: null,
+        saldo: `${contrato.moneda === 'USD' ? 'U$S' : 'ARS'} ${fmt(saldo)}`,
+        deudaReal: saldo
+      });
+    }
+  });
+
+  // ── Construir set de facturas anuladas por NC ────────────────────
+  const numerosAnulados = new Set(
+    DB.facturas
+      .filter(f => f.tipo === 'nc' && f.ncRefNumero)
+      .map(f => f.ncRefNumero.trim())
+  );
+
+  // ── Deudas por facturas ──────────────────────────────────────────
+  // Incluye: no anuladas, no canceladas por NC, y que tengan saldo O retención
+  DB.facturas
+    .filter(f => f.tipo === 'factura' || f.tipo === 'facturab')
+    .filter(f => !f.anulada)
+    .filter(f => !numerosAnulados.has((f.numero||'').trim()))
+    .forEach(f => {
+      const montoCobrado = f.montoCobrado || 0;
+      const diferencia = f.monto - montoCobrado;
+
+      // Calcular retención: suma de cobros bancarios con retención vinculados a esta factura
+      const retencionTotal = DB.cobrosBancarios
+        .filter(c => c.facturaId === f.id && c.retencion)
+        .reduce((s, c) => s + (f.monto - c.monto - (montoCobrado - c.monto)), 0);
+
+      // Recalcular: retención = total factura - lo efectivamente cobrado (cuando hay flag de retención)
+      const hayRetencion = f.retencionGanancias === true;
+      const montoRetencion = hayRetencion ? Math.max(0, diferencia) : 0;
+      const saldoReal = hayRetencion ? 0 : Math.max(0, diferencia);
+      const redondeadoCero = saldoReal > 0 && saldoReal < 1000;
+      const saldoEfectivo = redondeadoCero ? 0 : saldoReal;
+
+      // Mostrar si: tiene deuda real > 0, tiene retención, O fue redondeado a cero
+      if (saldoEfectivo > 0 || hayRetencion || redondeadoCero) {
+        rows.push({
+          cliente: f.cliente,
+          origen: `Factura ${f.numero}`,
+          fecha: f.fecha || null,
+          total: `ARS ${fmt(f.monto)}`,
+          cobrado: `ARS ${fmt(montoCobrado)}`,
+          retencion: hayRetencion ? `ARS ${fmt(montoRetencion)}` : null,
+          saldo: `ARS ${fmt(saldoEfectivo)}`,
+          deudaReal: saldoEfectivo,
+          conRetencion: hayRetencion,
+          redondeado: redondeadoCero
+        });
+      }
+    });
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state" style="padding:20px"><div class="empty-icon">✅</div><div class="empty-text">Sin deudas pendientes registradas</div></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.cliente}</td>
+      <td><span class="badge badge-${r.origen.startsWith('Contrato')?'gestion':'facturado'}">${r.origen}</span></td>
+      <td style="color:var(--text3);font-size:12px;white-space:nowrap">${r.fecha ? fmtFecha(r.fecha) : '—'}</td>
+      <td>${r.total}</td>
+      <td style="color:var(--success)">${r.cobrado}</td>
+      <td style="color:#7040a0;font-size:12px">${r.retencion
+        ? `<span class="badge badge-gestion">${r.retencion}</span>`
+        : '<span style="color:var(--text3)">—</span>'
+      }</td>
+      <td style="color:${r.deudaReal > 0 ? 'var(--danger)' : 'var(--success)'}">
+        <strong>${r.deudaReal > 0 ? r.saldo : '✓ Sin deuda'}</strong>
+        ${r.conRetencion && r.deudaReal === 0 ? '<div style="font-size:10px;color:var(--text3);font-weight:400">Diferencia por retención</div>' : ''}
+        ${r.redondeado ? '<div style="font-size:10px;color:var(--text3);font-weight:400">Diferencia menor a $1.000</div>' : ''}
+      </td>
+    </tr>`).join('');
+}
+
+// ════════════════════════════════════════════
+// CLIENTES
+// ════════════════════════════════════════════
+// ════════════════════════════════════════════
+// ALIASES DE CLIENTES
+// ════════════════════════════════════════════
+
+/**
+ * Dado un nombre, devuelve TODOS los nombres que la app considera equivalentes
+ * (el propio + el principal si es alias + todos los alias del principal).
+ */
+function resolverNombresEquivalentes(nombre) {
+  if (!nombre) return [nombre];
+  const aliases = DB.clientesAlias || [];
+  const nombres = new Set([nombre]);
+
+  // Si este nombre ES un alias, agregar el principal
+  aliases.filter(a => a.alias.toLowerCase() === nombre.toLowerCase())
+         .forEach(a => nombres.add(a.principal));
+
+  // Si este nombre ES un principal, agregar todos sus alias
+  aliases.filter(a => a.principal.toLowerCase() === nombre.toLowerCase())
+         .forEach(a => nombres.add(a.alias));
+
+  // Segundo nivel: si alguno de los agregados tiene más relaciones
+  const extra = new Set();
+  nombres.forEach(n => {
+    aliases.filter(a => a.principal.toLowerCase() === n.toLowerCase() || a.alias.toLowerCase() === n.toLowerCase())
+           .forEach(a => { extra.add(a.principal); extra.add(a.alias); });
+  });
+  extra.forEach(n => nombres.add(n));
+
+  return [...nombres];
+}
+
+/** Nombre canónico (principal) de un cliente dado */
+function nombreCanónico(nombre) {
+  const alias = (DB.clientesAlias||[]).find(a => a.alias.toLowerCase() === nombre.toLowerCase());
+  return alias ? alias.principal : nombre;
+}
+
+function guardarAlias() {
+  const principal = document.getElementById('alias-principal').value.trim();
+  const alias = document.getElementById('alias-alternativo').value.trim();
+  if (!principal || !alias) { toast('Completá los dos nombres.', 'error'); return; }
+  if (principal.toLowerCase() === alias.toLowerCase()) { toast('Los dos nombres son iguales.', 'error'); return; }
+
+  const aliases = DB.clientesAlias || [];
+  const existe = aliases.find(a =>
+    (a.principal.toLowerCase() === principal.toLowerCase() && a.alias.toLowerCase() === alias.toLowerCase()) ||
+    (a.principal.toLowerCase() === alias.toLowerCase() && a.alias.toLowerCase() === principal.toLowerCase())
+  );
+  if (existe) { toast('Ese alias ya está registrado.', 'error'); return; }
+
+  aliases.push({ id: Date.now().toString(), principal, alias, fechaReg: new Date().toISOString() });
+  DB.clientesAlias = aliases;
+  saveDB();
+  document.getElementById('alias-principal').value = '';
+  document.getElementById('alias-alternativo').value = '';
+  renderTablaAliases();
+  renderClientes();
+  toast('Alias registrado correctamente.', 'success');
+}
+
+function eliminarAlias(id) {
+  DB.clientesAlias = (DB.clientesAlias||[]).filter(a => a.id !== id);
+  saveDB();
+  renderTablaAliases();
+  renderClientes();
+  toast('Alias eliminado.', 'info');
+}
+
+function renderTablaAliases() {
+  const aliases = DB.clientesAlias || [];
+  const contador = document.getElementById('alias-contador');
+  if (contador) contador.textContent = aliases.length ? `${aliases.length} alias registrado(s)` : '';
+
+  // Poblar datalist con nombres conocidos
+  const todosLosNombres = [...new Set([
+    ...DB.contratos.map(c=>c.cliente),
+    ...DB.facturas.map(f=>f.cliente),
+    ...DB.pagosMano.map(p=>p.cliente),
+    ...DB.presupuestos.map(p=>p.cliente),
+    ...(DB.clientesAlias||[]).map(a=>a.principal),
+  ])].filter(Boolean).sort();
+  const dl = document.getElementById('alias-principales-list');
+  if (dl) dl.innerHTML = todosLosNombres.map(n=>`<option value="${n}">`).join('');
+
+  const tbody = document.getElementById('tabla-aliases');
+  if (!tbody) return;
+  if (!aliases.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state" style="padding:24px"><div class="empty-icon">🔗</div><div class="empty-text">No hay aliases registrados aún</div></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = aliases.map(a => {
+    // Contar en cuántos registros aparece el alias
+    const aparece = [
+      ...DB.contratos.filter(c=>c.cliente===a.alias||c.cliente===a.principal),
+      ...DB.facturas.filter(f=>f.cliente===a.alias||f.cliente===a.principal),
+      ...DB.pagosMano.filter(p=>p.cliente===a.alias||p.cliente===a.principal),
+      ...DB.presupuestos.filter(p=>p.cliente===a.alias||p.cliente===a.principal),
+    ].length;
+    return `<tr>
+      <td style="font-weight:500;color:var(--text)">${a.principal}</td>
+      <td style="color:var(--accent)">${a.alias}</td>
+      <td style="font-size:12px;color:var(--text3)">${aparece} registro(s)</td>
+      <td><button class="btn-sm btn-danger" style="padding:4px 10px;font-size:11px" onclick="eliminarAlias('${a.id}')">Eliminar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderClientes() {
+  renderTablaAliases();
+
+  // Recopilar TODOS los nombres y agrupar por canónico
+  const todosNombres = [...new Set([
+    ...DB.contratos.map(c=>c.cliente),
+    ...DB.facturas.map(f=>f.cliente),
+    ...DB.pagosMano.map(p=>p.cliente),
+    ...DB.cobrosBancarios.map(c=>c.cliente).filter(Boolean),
+    ...DB.presupuestos.map(p=>p.cliente),
+  ])].filter(Boolean);
+
+  // Construir grupos: { canonico: Set<nombres> }
+  const grupos = {};
+  todosNombres.forEach(n => {
+    const canon = nombreCanónico(n);
+    if (!grupos[canon]) grupos[canon] = new Set();
+    grupos[canon].add(n);
+    // agregar todos los equivalentes
+    resolverNombresEquivalentes(n).forEach(eq => grupos[canon].add(eq));
+  });
+
+  let clientes = Object.keys(grupos).sort();
+
+  // Filtro de búsqueda
+  const search = (document.getElementById('clientes-search')?.value||'').trim().toLowerCase();
+  if (search) {
+    clientes = clientes.filter(c => {
+      const todosNombresGrupo = [...grupos[c]].join(' ').toLowerCase();
+      return todosNombresGrupo.includes(search);
+    });
+  }
+
+  const totalEl = document.getElementById('clientes-total');
+  if (totalEl) totalEl.textContent = clientes.length ? `${clientes.length} cliente(s)` : '';
+
+  const el = document.getElementById('lista-clientes');
+  if (!clientes.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">No hay clientes registrados aún</div></div>';
+    return;
+  }
+
+  el.innerHTML = clientes.map(cliente => {
+    const nombresGrupo = [...grupos[cliente]];
+    const aliasDelCliente = (DB.clientesAlias||[]).filter(a =>
+      nombresGrupo.some(n => n.toLowerCase() === a.principal.toLowerCase() || n.toLowerCase() === a.alias.toLowerCase())
+    );
+
+    // Agregar todos los nombres del grupo para consultar la DB
+    const contratos = DB.contratos.filter(c=>nombresGrupo.includes(c.cliente));
+    const facturas = DB.facturas.filter(f=>nombresGrupo.includes(f.cliente)&&f.tipo==='factura'&&!f.anulada);
+    const pagosMano = DB.pagosMano.filter(p=>nombresGrupo.includes(p.cliente));
+    const bancarios = DB.cobrosBancarios.filter(c=>nombresGrupo.includes(c.cliente));
+    const presupuestos = DB.presupuestos.filter(p=>nombresGrupo.includes(p.cliente));
+    const totalCobradoARS = pagosMano.filter(p=>p.moneda==='ARS').reduce((s,p)=>s+p.monto,0)
+      + bancarios.reduce((s,c)=>s+c.monto,0);
+    const totalCobradoUSD = pagosMano.filter(p=>p.moneda==='USD').reduce((s,p)=>s+p.monto,0);
+
+    const aliasTag = aliasDelCliente.length
+      ? aliasDelCliente.map(a => {
+          const otro = nombresGrupo.find(n=>n.toLowerCase()===a.alias.toLowerCase()) ? a.principal : a.alias;
+          const esAliasLabel = a.alias.toLowerCase() !== cliente.toLowerCase() ? a.alias : a.principal;
+          return `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(201,169,110,0.1);border:1px solid rgba(201,169,110,0.25);border-radius:5px;padding:2px 8px;font-size:11px;color:var(--accent);margin-right:5px">🔗 ${esAliasLabel}</span>`;
+        }).join('')
+      : '';
+
+    return `
+      <div class="table-wrap" style="margin-bottom:16px">
+        <div class="table-header">
+          <div>
+            <span class="table-title">👤 ${cliente}</span>
+            ${aliasTag ? `<div style="margin-top:6px">${aliasTag}</div>` : ''}
+          </div>
+          <span style="font-size:12px;color:var(--text3)">${contratos.length} contrato(s) · ${facturas.length} factura(s) · ${presupuestos.length} presupuesto(s)</span>
+        </div>
+        <div style="padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <div><div class="stat-label">Cobrado ARS</div><div style="font-size:18px;color:var(--accent);font-family:var(--font-display)">$${fmt(totalCobradoARS)}</div></div>
+          <div><div class="stat-label">Cobrado USD</div><div style="font-size:18px;color:var(--success);font-family:var(--font-display)">${totalCobradoUSD ? 'U$S '+fmt(totalCobradoUSD) : '—'}</div></div>
+          <div><div class="stat-label">Pagos en Mano</div><div style="font-size:18px;color:var(--info);font-family:var(--font-display)">${pagosMano.length}</div></div>
+          <div><div class="stat-label">Presupuestos</div><div style="font-size:18px;color:var(--text2);font-family:var(--font-display)">${presupuestos.length}</div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// ANÁLISIS IA
+// ════════════════════════════════════════════
+async function consultarIA() {
+  const query = document.getElementById('ai-query').value.trim();
+  if (!query) { toast('Escribí una consulta primero.', 'error'); return; }
+
+  const el = document.getElementById('ai-respuesta');
+  el.innerHTML = `<div class="ai-bubble"><div class="ai-label">IA</div><span class="spinner"></span>Analizando datos...</div>`;
+
+  const resumen = {
+    contratos: DB.contratos.length,
+    facturas: DB.facturas.filter(f=>f.tipo==='factura').length,
+    notasCredito: DB.facturas.filter(f=>f.tipo==='nc').length,
+    pagosMano: DB.pagosMano.length,
+    cobrosBancarios: DB.cobrosBancarios.length,
+    datos: DB
+  };
+
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Sos el asistente contable de una empresa que combina un estudio de arquitectura y gestión municipal en Argentina.
+
+Datos actuales de la empresa:
+${JSON.stringify(resumen, null, 2)}
+
+Respondé esta consulta en español, de forma clara y concisa:
+${query}`
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content.map(i=>i.text||'').join('');
+    el.innerHTML = `<div class="ai-bubble"><div class="ai-label">🤖 Respuesta</div>${text}</div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="ai-bubble"><div class="ai-label">Error</div>No se pudo conectar con la IA.</div>`;
+  }
+}
+
+// ════════════════════════════════════════════
+// GOOGLE DRIVE UPLOAD
+// ════════════════════════════════════════════
+async function uploadToDrive(file, filename) {
+  try {
+    const base64 = await fileToBase64(file);
+    // Llamada directa a la Drive API via el Worker (endpoint /drive/upload)
+    const response = await fetch(WORKER_URL + '/drive/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename,
+        mimeType: 'application/pdf',
+        parentId: DRIVE_FOLDER_ID,
+        base64
+      })
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    return data.fileId || data.id || null;
+  } catch(e) {
+    console.warn('Drive upload failed:', e);
+    return null;
+  }
+}
+
+// ════════════════════════════════════════════
+// DOCUMENTOS
+// ════════════════════════════════════════════
+function renderDocumentos() {
+  const tbody = document.getElementById('tabla-documentos');
+  const docs = DB.facturas.filter(f => f.numero);
+  if (!docs.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📁</div><div class="empty-text">No hay documentos registrados aún. Cargá facturas para verlas acá.</div></div></td></tr>';
+    return;
+  }
+  const sorted = [...docs].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  tbody.innerHTML = sorted.map(f => {
+    const tipoBadge = f.tipo === 'nc'
+      ? '<span class="badge badge-anulada">Nota Crédito</span>'
+      : f.tipo === 'facturab'
+        ? '<span class="badge badge-gestion">Factura B</span>'
+        : '<span class="badge badge-facturado">Factura A</span>';
+    const estadoBadge = f.anulada
+      ? '<span class="badge badge-anulada">Anulada</span>'
+      : f.pagada
+        ? '<span class="badge badge-pagado">Pagada</span>'
+        : (f.montoCobrado||0) > 0
+          ? '<span class="badge badge-parcial">Pago Parcial</span>'
+          : '<span class="badge badge-pendiente">Pendiente</span>';
+    const archivoLink = f.driveFileId
+      ? '<a href="https://drive.google.com/file/d/' + f.driveFileId + '/view" target="_blank" class="btn-sm btn-ghost" style="text-decoration:none;font-size:11px;padding:4px 10px">⬇️ Ver en Drive</a>'
+      : '<span style="color:var(--text3);font-size:12px">Sin archivo</span>';
+    return '<tr>' +
+      '<td><div style="font-weight:500">' + (f.numero||'—') + '</div>' + (f.cae ? '<div style="font-size:11px;color:var(--text3)">CAE: ' + f.cae + '</div>' : '') + '</td>' +
+      '<td><div>' + (f.cliente||'—') + '</div>' + (f.cuit_cliente ? '<div style="font-size:11px;color:var(--text3)">' + f.cuit_cliente + '</div>' : '') + '</td>' +
+      '<td>' + tipoBadge + '</td>' +
+      '<td>' + fmtFecha(f.fecha) + '</td>' +
+      '<td><div style="color:var(--accent)">$' + fmt(f.monto||0) + '</div><div style="font-size:11px;color:var(--text3)">Neto: $' + fmt(f.neto_gravado||0) + '</div></td>' +
+      '<td>' + archivoLink + ' ' + estadoBadge + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// UTILIDADES
+// ════════════════════════════════════════════
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Error leyendo archivo'));
+    r.readAsDataURL(file);
+  });
+}
+
+function fmt(n) {
+  if (!n && n !== 0) return '0';
+  return Number(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function fmtFecha(f) {
+  if (!f) return '—';
+  const [y,m,d] = f.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function cerrarModal() { document.getElementById('modal-mov').classList.remove('open'); }
+
+// ════════════════════════════════════════════
+// EXPORTAR PDF
+// ════════════════════════════════════════════
+function exportarDeudasPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  // Encabezado
+  const hoy = new Date();
+  const fechaStr = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(80, 60, 20);
+  doc.text('Inver Quetzal SRL', 14, 18);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(120, 100, 60);
+  doc.text('Deuda por Cliente', 14, 25);
+  doc.text(`Generado: ${fechaStr}`, 270, 25, { align: 'right' });
+
+  // Recolectar datos de la tabla renderizada
+  const filas = [];
+  document.querySelectorAll('#dash-deuda tr').forEach(tr => {
+    const celdas = tr.querySelectorAll('td');
+    if (!celdas.length) return;
+    filas.push([
+      celdas[0]?.innerText || '',   // Cliente
+      celdas[1]?.innerText || '',   // Origen
+      celdas[2]?.innerText || '',   // Fecha
+      celdas[3]?.innerText || '',   // Total
+      celdas[4]?.innerText || '',   // Cobrado
+      celdas[5]?.innerText || '',   // Retención
+      celdas[6]?.innerText || '',   // Saldo
+    ]);
+  });
+
+  doc.autoTable({
+    startY: 30,
+    head: [['Cliente', 'Origen', 'Fecha', 'Total Acordado', 'Cobrado', 'Retención', 'Saldo Pendiente']],
+    body: filas,
+    styles: {
+      font: 'helvetica',
+      fontSize: 9,
+      cellPadding: 3,
+      textColor: [30, 26, 20],
+    },
+    headStyles: {
+      fillColor: [138, 106, 58],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 9,
+    },
+    alternateRowStyles: {
+      fillColor: [245, 240, 232],
+    },
+    columnStyles: {
+      0: { cellWidth: 55 },
+      1: { cellWidth: 45 },
+      2: { cellWidth: 22 },
+      3: { cellWidth: 35, halign: 'right' },
+      4: { cellWidth: 35, halign: 'right' },
+      5: { cellWidth: 30, halign: 'right' },
+      6: { cellWidth: 40, halign: 'right' },
+    },
+    didParseCell: (data) => {
+      // Colorear saldo pendiente: rojo si deuda, verde si sin deuda
+      if (data.column.index === 6 && data.section === 'body') {
+        const txt = data.cell.raw || '';
+        if (txt.includes('Sin deuda')) {
+          data.cell.styles.textColor = [74, 138, 96];
+        } else if (txt.includes('ARS') || txt.includes('U$S')) {
+          data.cell.styles.textColor = [184, 80, 80];
+          data.cell.styles.fontStyle = 'bold';
+        }
+      }
+    },
+    margin: { left: 14, right: 14 },
+  });
+
+  // Totales al pie
+  const totalDeuda = [...document.querySelectorAll('#dash-deuda tr')]
+    .map(tr => tr.querySelectorAll('td')[6]?.innerText || '')
+    .filter(t => t.includes('ARS') && !t.includes('Sin deuda'))
+    .join(' | ');
+
+  const finalY = doc.lastAutoTable.finalY + 6;
+  doc.setFontSize(8);
+  doc.setTextColor(120, 100, 60);
+  doc.text('* Las diferencias por retención de Ganancias no se contabilizan como deuda pendiente.', 14, finalY);
+
+  doc.save(`DeudaClientes_${fechaStr.replace(/\//g,'-')}.pdf`);
+  toast('PDF exportado correctamente.', 'success');
+}
+
+// ════════════════════════════════════════════
+// PRESUPUESTOS — CARGA AUTOMÁTICA POR PDF
+// ════════════════════════════════════════════
+let presupuestosArchivos = [];
+let presupuestosPendientes = [];
+let presupuestosFiltro = 'todos';
+
+function handlePresupuestoDrop(event) {
+  event.preventDefault();
+  document.getElementById('pres-drop-zone').classList.remove('drag');
+  cargarArchivosPresupuesto(event.dataTransfer.files);
+}
+
+function procesarPresupuestosPDF(files) {
+  cargarArchivosPresupuesto(files);
+}
+
+function cargarArchivosPresupuesto(files) {
+  const pdfs = Array.from(files).filter(f => f.type === 'application/pdf');
+  if (!pdfs.length) { toast('Solo se aceptan archivos PDF.', 'error'); return; }
+  presupuestosArchivos = pdfs.map(f => ({ file: f, nombre: f.name }));
+  const lista = document.getElementById('pres-lista-archivos');
+  lista.innerHTML = presupuestosArchivos.map((a, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:7px;margin-bottom:6px">
+      <span style="font-size:16px">📝</span>
+      <span style="font-size:13px;color:var(--text);flex:1">${a.nombre}</span>
+      <span class="badge badge-pendiente" id="pres-estado-${i}">Pendiente</span>
+    </div>`).join('');
+  document.getElementById('pres-archivos-seleccionados').style.display = '';
+}
+
+function limpiarSeleccionPresupuestos() {
+  presupuestosArchivos = [];
+  presupuestosPendientes = [];
+  document.getElementById('pres-archivos-seleccionados').style.display = 'none';
+  document.getElementById('pres-revision-card').style.display = 'none';
+  document.getElementById('pres-pdfs').value = '';
+}
+
+async function procesarPresupuestosConIA() {
+  if (!presupuestosArchivos.length) return;
+  const btn = document.getElementById('pres-btn-procesar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Procesando...';
+  presupuestosPendientes = [];
+
+  for (let i = 0; i < presupuestosArchivos.length; i++) {
+    const archivo = presupuestosArchivos[i];
+    const estadoEl = document.getElementById(`pres-estado-${i}`);
+    estadoEl.textContent = 'Procesando...';
+    estadoEl.className = 'badge badge-parcial';
+
+    try {
+      const base64 = await fileToBase64(archivo.file);
+      const prompt = `Analizá este presupuesto argentino y extraé los datos principales. Devolvé ÚNICAMENTE un objeto JSON con este formato exacto, sin texto adicional:
+{
+  "fecha": "YYYY-MM-DD",
+  "cliente": "nombre del cliente o destinatario",
+  "obra": "dirección o nombre de la obra/proyecto",
+  "concepto": "título o descripción del trabajo presupuestado",
+  "monto": 0.00,
+  "moneda": "USD" o "ARS",
+  "tipo": "gestion" si es gestión municipal, "arquitectura" si es estudio de arquitectura, "ambos" si incluye ambos,
+  "forma_pago": "texto de la forma de pago tal como aparece, o vacío si no hay",
+  "validez": "validez del presupuesto si se indica, o null"
+}
+Si el monto incluye IVA extraé el neto sin IVA. Si el precio es a convenir, poné 0.`;
+
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-5',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+      if (!data.content) throw new Error('Respuesta inesperada');
+      const text = data.content.map(b => b.text || '').join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      parsed._archivo = archivo;
+      parsed._idx = i;
+      presupuestosPendientes.push(parsed);
+      estadoEl.textContent = '✓ Leído';
+      estadoEl.className = 'badge badge-pagado';
+    } catch(e) {
+      estadoEl.textContent = 'Error';
+      estadoEl.className = 'badge badge-anulada';
+      toast(`Error procesando ${archivo.nombre}: ${e.message}`, 'error');
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✨ Procesar con IA';
+
+  if (presupuestosPendientes.length) {
+    renderRevisionPresupuestos();
+    document.getElementById('pres-revision-card').style.display = '';
+    document.getElementById('pres-revision-card').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function renderRevisionPresupuestos() {
+  document.getElementById('pres-revision-contenido').innerHTML = presupuestosPendientes.map((p, i) => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px">
+      <div style="font-weight:600;color:var(--text);margin-bottom:16px">📝 ${p._archivo.nombre}</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cliente</label>
+          <input type="text" id="rp-cliente-${i}" value="${p.cliente||''}">
+        </div>
+        <div class="form-group">
+          <label>Obra / Dirección</label>
+          <input type="text" id="rp-obra-${i}" value="${p.obra||''}">
+        </div>
+        <div class="form-group full">
+          <label>Concepto / Trabajo</label>
+          <input type="text" id="rp-concepto-${i}" value="${p.concepto||''}">
+        </div>
+        <div class="form-group">
+          <label>Monto</label>
+          <input type="number" id="rp-monto-${i}" value="${p.monto||0}">
+        </div>
+        <div class="form-group">
+          <label>Moneda</label>
+          <select id="rp-moneda-${i}">
+            <option value="ARS" ${p.moneda==='ARS'?'selected':''}>Pesos (ARS)</option>
+            <option value="USD" ${p.moneda==='USD'?'selected':''}>Dólares (USD)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="rp-fecha-${i}" value="${p.fecha||''}">
+        </div>
+        <div class="form-group">
+          <label>Tipo de Servicio</label>
+          <select id="rp-tipo-${i}">
+            <option value="arquitectura" ${p.tipo==='arquitectura'?'selected':''}>Estudio de Arquitectura</option>
+            <option value="gestion" ${p.tipo==='gestion'?'selected':''}>Gestión Municipal</option>
+            <option value="ambos" ${p.tipo==='ambos'?'selected':''}>Ambos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Validez (opcional)</label>
+          <input type="text" id="rp-validez-${i}" value="${p.validez||''}" placeholder="Ej: 30 días">
+        </div>
+        <div class="form-group full">
+          <label>Forma de Pago</label>
+          <input type="text" id="rp-pago-${i}" value="${p.forma_pago||''}">
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function confirmarPresupuestos() {
+  presupuestosPendientes.forEach((p, i) => {
+    const presupuesto = {
+      id: Date.now().toString() + i,
+      cliente: document.getElementById(`rp-cliente-${i}`).value.trim(),
+      obra: document.getElementById(`rp-obra-${i}`).value.trim(),
+      concepto: document.getElementById(`rp-concepto-${i}`).value.trim(),
+      monto: parseFloat(document.getElementById(`rp-monto-${i}`).value) || 0,
+      moneda: document.getElementById(`rp-moneda-${i}`).value,
+      fecha: document.getElementById(`rp-fecha-${i}`).value,
+      tipo: document.getElementById(`rp-tipo-${i}`).value,
+      validez: document.getElementById(`rp-validez-${i}`).value.trim(),
+      forma_pago: document.getElementById(`rp-pago-${i}`).value.trim(),
+      estado: 'pendiente', // 'pendiente' | 'aprobado'
+      fechaAprobacion: null,
+      fechaReg: new Date().toISOString()
+    };
+    DB.presupuestos.push(presupuesto);
+  });
+  saveDB();
+  renderTablaPresupuestos();
+  limpiarSeleccionPresupuestos();
+  toast(`${presupuestosPendientes.length} presupuesto(s) guardado(s) correctamente.`, 'success');
+  document.getElementById('pres-upload-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelarRevisionPresupuestos() {
+  presupuestosPendientes = [];
+  document.getElementById('pres-revision-card').style.display = 'none';
+}
+
+function guardarNombreAlternativoPresupuesto(id, valor) {
+  const pres = DB.presupuestos.find(p => p.id === id);
+  if (!pres) return;
+  pres.nombreAlternativo = valor.trim();
+  saveDB();
+  // Refrescar tabla de contratos si el pres está aprobado (puede aparecer allí)
+  if (pres.estado === 'aprobado') renderTablaContratos();
+}
+
+function toggleAprobadoPresupuesto(id) {
+  const pres = DB.presupuestos.find(p => p.id === id);
+  if (!pres) return;
+  if (pres.estado === 'aprobado') {
+    pres.estado = 'pendiente';
+    pres.fechaAprobacion = null;
+    toast('Presupuesto marcado como pendiente.', 'info');
+  } else {
+    pres.estado = 'aprobado';
+    pres.fechaAprobacion = new Date().toISOString().split('T')[0];
+    toast('✅ Presupuesto aprobado.', 'success');
+  }
+  saveDB();
+  renderTablaPresupuestos();
+  renderTablaContratos();
+}
+
+function eliminarPresupuesto(id) {
+  if (!confirm('¿Seguro que querés eliminar este presupuesto?')) return;
+  DB.presupuestos = DB.presupuestos.filter(p => p.id !== id);
+  saveDB();
+  renderTablaPresupuestos();
+  toast('Presupuesto eliminado.', 'info');
+}
+
+function filtrarPresupuestos(filtro) {
+  presupuestosFiltro = filtro;
+  ['todos','pendiente','aprobado'].forEach(f => {
+    const btn = document.getElementById(`pf-${f}`);
+    if (btn) btn.style.borderColor = f === filtro ? 'var(--accent)' : '';
+    if (btn) btn.style.color = f === filtro ? 'var(--accent)' : '';
+  });
+  renderTablaPresupuestos();
+}
+
+function renderTablaPresupuestos() {
+  // Actualizar stats
+  const total = DB.presupuestos.length;
+  const aprobados = DB.presupuestos.filter(p => p.estado === 'aprobado').length;
+  const pendientes = total - aprobados;
+  const tasa = total > 0 ? Math.round((aprobados / total) * 100) + '%' : '—';
+
+  const statsEl = document.getElementById('pres-stats');
+  if (statsEl) {
+    statsEl.style.display = total > 0 ? '' : 'none';
+    document.getElementById('pres-stat-total').textContent = total;
+    document.getElementById('pres-stat-aprobados').textContent = aprobados;
+    document.getElementById('pres-stat-pendientes').textContent = pendientes;
+    document.getElementById('pres-stat-tasa').textContent = tasa;
+  }
+
+  const tbody = document.getElementById('tabla-presupuestos');
+  if (!DB.presupuestos.length) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📝</div><div class="empty-text">Subí PDFs arriba para registrar presupuestos automáticamente</div></div></td></tr>';
+    return;
+  }
+
+  let lista = [...DB.presupuestos].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  if (presupuestosFiltro === 'pendiente') lista = lista.filter(p => p.estado !== 'aprobado');
+  if (presupuestosFiltro === 'aprobado') lista = lista.filter(p => p.estado === 'aprobado');
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state" style="padding:28px"><div class="empty-text">No hay presupuestos en este filtro</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(p => {
+    const aprobado = p.estado === 'aprobado';
+    const tipoBadge = p.tipo === 'gestion'
+      ? '<span class="badge badge-gestion">Gestión</span>'
+      : p.tipo === 'ambos'
+        ? '<span class="badge badge-parcial">Ambos</span>'
+        : '<span class="badge badge-arquitectura">Arquitectura</span>';
+
+    const estadoBadge = aprobado
+      ? '<span class="badge badge-aprobado">✓ Aprobado</span>'
+      : '<span class="badge badge-pres-pendiente">Pendiente</span>';
+
+    const btnToggle = aprobado
+      ? `<button class="btn-sm btn-ghost" style="padding:5px 10px;font-size:11px;border-color:rgba(74,138,96,0.4);color:var(--success)" onclick="toggleAprobadoPresupuesto('${p.id}')">↩ Desmarcar</button>`
+      : `<button class="btn-sm btn-accent" style="padding:5px 10px;font-size:11px" onclick="toggleAprobadoPresupuesto('${p.id}')">✓ Aprobar</button>`;
+
+    const montoFmt = `<span class="badge badge-${p.moneda==='USD'?'dolares':'pesos'}">${p.moneda==='USD'?'U$S':'$'} ${fmt(p.monto)}</span>`;
+
+    // Nombres alternativos: campo editable + aliases del sistema
+    const equivalentes = resolverNombresEquivalentes(p.cliente).filter(n => n.toLowerCase() !== p.cliente.toLowerCase());
+    const aliasGuardado = p.nombreAlternativo || '';
+    const aliasTagsSistema = equivalentes.length
+      ? '<div style="margin-top:4px">' + equivalentes.map(n => `<span style="display:inline-block;background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.2);border-radius:3px;padding:1px 6px;font-size:10px;color:var(--accent)">🔗 ${n}</span>`).join(' ') + '</div>'
+      : '';
+    const aliasCell = `<input type="text"
+        value="${aliasGuardado.replace(/"/g,'&quot;')}"
+        placeholder="Ej: Develop SA"
+        onchange="guardarNombreAlternativoPresupuesto('${p.id}', this.value)"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font-body);font-size:12px;outline:none;transition:border-color 0.2s"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor=''"
+      >${aliasTagsSistema}`;
+
+    return `<tr style="${aprobado ? 'background:rgba(74,138,96,0.04)' : ''}">
+      <td style="font-weight:500">${p.cliente}</td>
+      <td style="min-width:140px;max-width:180px">${aliasCell}</td>
+      <td style="font-size:12px;color:var(--text2)">${p.obra||'—'}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.concepto||''}">${p.concepto||'—'}</td>
+      <td>${montoFmt}</td>
+      <td>${p.moneda}</td>
+      <td style="font-size:12px;color:var(--text3)">${fmtFecha(p.fecha)}${aprobado && p.fechaAprobacion ? '<div style="font-size:11px;color:var(--success)">Aprobado: '+fmtFecha(p.fechaAprobacion)+'</div>' : ''}</td>
+      <td>${tipoBadge}</td>
+      <td>${estadoBadge}</td>
+      <td>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${btnToggle}
+          <button class="btn-sm btn-danger" style="padding:5px 8px;font-size:11px" onclick="eliminarPresupuesto('${p.id}')" title="Eliminar">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Init
+window.addEventListener('load', () => {
+  document.getElementById('f-fecha') && (document.getElementById('f-fecha').valueAsDate = new Date());
+  document.getElementById('pm-fecha').valueAsDate = new Date();
+  onPagoMonedaChange(); // estado inicial del campo TC
+});
+</script>
+</body>
+</html>
